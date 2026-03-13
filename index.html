@@ -104,6 +104,112 @@
     </div>
 </div>
 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Kasir Mitra Kaca v7.9.2 - Multi User</title>
+    <style>
+        :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; --info: #2980b9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f4f4f4; }
+        
+        /* Login Screen */
+        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; width: 300px; text-align: center; }
+
+        /* Layout */
+        #mainApp { display: none; height: 100vh; flex-direction: row; }
+        .sidebar { width: 320px; background: white; padding: 15px; border-right: 1px solid #ddd; overflow-y: auto; }
+        .main { flex: 1; padding: 20px; display: flex; flex-direction: column; background: #fdfdfd; }
+        
+        input, select, button { width: 100%; padding: 8px; margin: 4px 0; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        .row { display: flex; gap: 5px; align-items: center; }
+        .btn-add { background: var(--success); color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f8f9fa; }
+
+        .summary-box { background: white; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        #adminModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; }
+        .modal-content { background: white; width: 90%; margin: 20px auto; padding: 20px; border-radius: 8px; max-height: 90vh; overflow-y: auto; }
+
+        @media print {
+            @page { size: A6; margin: 5mm; }
+            .sidebar, .no-print, #adminModal, #loginScreen { display: none !important; }
+            #mainApp { display: block; }
+            .main { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loginScreen">
+    <div class="login-box">
+        <h2>Mitra Kaca</h2>
+        <p>Silakan Login</p>
+        <input type="text" id="userLogin" placeholder="Username">
+        <input type="password" id="passLogin" placeholder="Password">
+        <button onclick="cekLogin()" style="background:var(--success); color:white; border:none; padding:10px; margin-top:10px;">MASUK</button>
+    </div>
+</div>
+
+<div id="mainApp">
+    <div class="sidebar no-print">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 id="displayUser">User</h3>
+            <button onclick="logout()" style="width:70px; background:#999; color:white; font-size:10px;">Logout</button>
+        </div>
+        
+        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; font-size:11px;">🔒 PANEL ADMIN</button>
+        
+        <hr>
+        <label>Nama Pembeli:</label>
+        <input type="text" id="pembeli" value="Umum">
+        <label>Ukuran (cm):</label>
+        <div class="row">
+            <input type="number" id="p" placeholder="P"> <span>x</span> <input type="number" id="l" placeholder="L">
+        </div>
+        <label>Jenis Kaca:</label>
+        <select id="selKaca"></select>
+        <label>Pilihan Bevel:</label>
+        <select id="bevel">
+            <option value="none">Tanpa Bevel</option>
+            <option value="bev2">Bevel 2-2.5cm</option>
+            <option value="bev3">Bevel 3cm</option>
+        </select>
+        <div style="background:#f9f9f9; padding:8px; border-radius:5px; margin-top:10px;">
+            <label style="margin-top:0">Jasa Tambahan:</label>
+            <div class="row"><span>Bor</span><input type="number" id="bor" value="0"></div>
+            <div class="row"><span>CP</span><input type="number" id="pojok" value="0"></div>
+            <div class="row"><span>CT</span><input type="number" id="tepi" value="0"></div>
+        </div>
+        <label>Status Bayar:</label>
+        <select id="status_bayar" onchange="toggleDP()">
+            <option value="Lunas">Lunas</option>
+            <option value="Belum Lunas">Belum Lunas</option>
+        </select>
+        <div id="dp_area" style="display:none;"><input type="number" id="dp_val" placeholder="DP Rp"></div>
+        <button class="btn-add" onclick="tambahItem()" style="margin-top:15px;">✚ TAMBAH ITEM</button>
+        <button onclick="prosesTransaksi()" style="background:var(--primary); color:white; border:none; padding:12px; margin-top:10px;">🖨️ CETAK NOTA A6</button>
+    </div>
+
+    <div class="main">
+        <div class="table-cont">
+            <table>
+                <thead>
+                    <tr><th>Item</th><th>Ukuran</th><th>Jasa</th><th>Subtotal</th><th class="no-print">Aksi</th></tr>
+                </thead>
+                <tbody id="billBody"></tbody>
+            </table>
+        </div>
+        <div class="summary-box">
+            <div id="statusDisplay" style="font-weight:bold; color:var(--danger)"></div>
+            <div class="total-text" id="totalDisplay" style="font-size:20px; font-weight:bold;">TOTAL: Rp 0</div>
+        </div>
+    </div>
+</div>
+
 <div id="adminModal">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between">
@@ -135,6 +241,138 @@
 </div>
 
 <script>
+    // Database awal termasuk User Admin default
+    let db = JSON.parse(localStorage.getItem('mitraKaca_v7_db')) || {
+        inventory: { "Clear 5mm": { harga: 350000, gm: 15000, bor: 5000, pojok: 5000, tepi: 7000, bev2: 15000, bev3: 20000 } },
+        users: [ {user: "admin", pass: "admin123", role: "admin"} ],
+        kop: { nama: "MITRA KACA", alamat: "Jl. Alamat Anda No. 123" }
+    };
+
+    let currentUser = null;
+    let keranjang = [];
+
+    function saveDB() {
+        localStorage.setItem('mitraKaca_v7_db', JSON.stringify(db));
+        renderUI();
+    }
+
+    // --- SISTEM LOGIN ---
+    function cekLogin() {
+        const u = document.getElementById('userLogin').value;
+        const p = document.getElementById('passLogin').value;
+        const found = db.users.find(x => x.user === u && x.pass === p);
+
+        if(found) {
+            currentUser = found;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+            document.getElementById('displayUser').innerText = "Halo, " + u;
+            
+            // Tampilkan tombol Admin HANYA jika role adalah admin
+            if(found.role === 'admin') {
+                document.getElementById('btnAdmin').style.display = 'block';
+            }
+            renderUI();
+        } else {
+            alert("Username atau Password Salah!");
+        }
+    }
+
+    function logout() {
+        location.reload(); // Refresh halaman untuk logout aman
+    }
+
+    // --- MANAJEMEN USER (HANYA ADMIN) ---
+    function tambahUser() {
+        const u = document.getElementById('newUsername').value;
+        const p = document.getElementById('newPassword').value;
+        const r = document.getElementById('newRole').value;
+        if(!u || !p) return alert("Isi data user!");
+        
+        db.users.push({user: u, pass: p, role: r});
+        saveDB();
+        renderUserTable();
+        alert("User berhasil ditambahkan!");
+    }
+
+    function hapusUser(idx) {
+        if(db.users[idx].user === 'admin') return alert("Admin utama tidak bisa dihapus!");
+        db.users.splice(idx, 1);
+        saveDB();
+        renderUserTable();
+    }
+
+    function renderUserTable() {
+        const b = document.getElementById('userTableBody');
+        b.innerHTML = "";
+        db.users.forEach((u, i) => {
+            b.innerHTML += `<tr><td>${u.user}</td><td>${u.role}</td><td><button onclick="hapusUser(${i})" style="background:red; color:white; border:none;">Hapus</button></td></tr>`;
+        });
+    }
+
+    // --- FUNGSI KASIR (SAMA SEPERTI SEBELUMNYA) ---
+    function renderUI() {
+        const sel = document.getElementById('selKaca');
+        sel.innerHTML = "";
+        for (let k in db.inventory) { sel.innerHTML += `<option value="${k}">${k}</option>`; }
+    }
+
+    function toggleDP() {
+        document.getElementById('dp_area').style.display = (document.getElementById('status_bayar').value === "Belum Lunas") ? "block" : "none";
+    }
+
+    function tambahItem() {
+        const p = parseFloat(document.getElementById('p').value);
+        const l = parseFloat(document.getElementById('l').value);
+        const jenis = document.getElementById('selKaca').value;
+        if(!p || !l) return alert("Isi ukuran!");
+        
+        const d = db.inventory[jenis];
+        const sub = (p/100 * l/100) * d.harga + (2*(p/100) + 2*(l/100)) * d.gm;
+        keranjang.push({ jenis, p, l, subtotal: sub });
+        renderBill();
+    }
+
+    function renderBill() {
+        const body = document.getElementById('billBody');
+        body.innerHTML = "";
+        let total = 0;
+        keranjang.forEach((it, i) => {
+            total += it.subtotal;
+            body.innerHTML += `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>-</td><td>Rp ${Math.round(it.subtotal).toLocaleString()}</td><td class="no-print"><button onclick="hapusItem(${i})" style="color:red; background:none; border:none; cursor:pointer;">X</button></td></tr>`;
+        });
+        document.getElementById('totalDisplay').innerText = "TOTAL: Rp " + Math.round(total).toLocaleString();
+    }
+
+    function hapusItem(i) { keranjang.splice(i, 1); renderBill(); }
+
+    function prosesTransaksi() {
+        if(keranjang.length === 0) return alert("Kosong!");
+        window.print();
+        keranjang = [];
+        renderBill();
+    }
+
+    function bukaAdmin() {
+        document.getElementById('adminModal').style.display = 'block';
+        renderUserTable();
+    }
+    function tutupAdmin() { document.getElementById('adminModal').style.display = 'none'; }
+
+    function updateHarga() {
+        const n = document.getElementById('admNama').value;
+        const h = parseInt(document.getElementById('admHarga').value);
+        const g = parseInt(document.getElementById('admGM').value);
+        if(!n || !h) return;
+        db.inventory[n] = { ...db.inventory["Clear 5mm"], harga: h, gm: g };
+        saveDB();
+    }
+
+    renderUI();
+</script>
+</body>
+</html>
+
     // Database awal termasuk User Admin default
     let db = JSON.parse(localStorage.getItem('mitraKaca_v7_db')) || {
         inventory: { "Clear 5mm": { harga: 350000, gm: 15000, bor: 5000, pojok: 5000, tepi: 7000, bev2: 15000, bev3: 20000 } },
