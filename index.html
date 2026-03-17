@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir Mitra Kaca v8.1.0 by Alphetech - Pro</title>
+    <title>Kasir Mitra Kaca v8.1.1 - Full Admin</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; --info: #2980b9; --warning: #f39c12; }
+        :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; --info: #2980b9; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f4f4f4; }
         #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); display: flex; justify-content: center; align-items: center; z-index: 9999; }
         .login-box { background: white; padding: 30px; border-radius: 8px; width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
@@ -23,18 +23,17 @@
         .summary-box { background: white; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         #adminModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; }
         .modal-content { background: white; width: 95%; margin: 10px auto; padding: 20px; border-radius: 8px; max-height: 95vh; overflow-y: auto; }
-        .status-tag { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; display: inline-block; }
-        .tag-lunas { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .tag-hutang { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status-tag { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
+        .tag-lunas { background: #d4edda; color: #155724; }
+        .tag-hutang { background: #f8d7da; color: #721c24; }
         .kop-nota { display: none; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
         
         @media print {
             @page { size: A5 landscape; margin: 10mm; }
-            .sidebar, .no-print, #adminModal, #loginScreen, .aksi-col { display: none !important; }
+            .sidebar, .no-print, #adminModal, #loginScreen { display: none !important; }
             #mainApp { display: block; }
             .main { padding: 0; border: none; }
             .kop-nota { display: block; }
-            .table-cont { border: none; }
         }
     </style>
 </head>
@@ -56,7 +55,7 @@
             <h3 id="displayUser">User</h3>
             <div id="liveDate" style="font-size: 11px; color: #666;"></div>
         </div>
-        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">🔒 PANEL ADMIN & HISTORY</button>
+        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">🔒 PANEL ADMIN & USER</button>
         <hr>
         <label>Tanggal:</label><input type="date" id="tgl_input">
         <label>Nama Pembeli:</label><input type="text" id="pembeli" placeholder="Nama Pelanggan">
@@ -64,25 +63,19 @@
         <div class="row"><input type="number" id="p" placeholder="P"> <span>x</span> <input type="number" id="l" placeholder="L"></div>
         <label>Jenis Kaca:</label><select id="selKaca"></select>
         <label>Bevel:</label><select id="bevel"><option value="none">Tanpa Bevel</option><option value="bev2">Bevel 2cm</option><option value="bev3">Bevel 3cm</option></select>
-        
         <div style="background:#f9f9f9; padding:10px; border-radius:5px; margin-top:10px; border:1px solid #eee;">
             <label>Jasa & Tambahan:</label>
             <div class="row"><span>Bor</span><input type="number" id="bor" value="0"> <span>CP</span><input type="number" id="pojok" value="0"></div>
             <div class="row"><span>CT</span><input type="number" id="tepi" value="0"></div>
         </div>
-
         <label>Pembayaran:</label>
         <select id="status_bayar" onchange="updateInfoBayar()">
             <option value="Lunas">Lunas</option>
             <option value="Belum Lunas">Belum Lunas (Hutang)</option>
         </select>
-        <div id="area_dp" style="display:none;">
-            <label>Uang Muka (DP):</label>
-            <input type="number" id="input_dp" value="0" oninput="updateInfoBayar()">
-        </div>
-
-        <button class="btn-add" onclick="tambahItem()" style="margin-top:10px;">✚ TAMBAH KE DAFTAR</button>
-        <button onclick="prosesTransaksi()" style="background:var(--primary); color:white; border:none; padding:12px; margin-top:10px; cursor:pointer;">🖨️ SIMPAN & CETAK NOTA</button>
+        <div id="area_dp" style="display:none;"><label>Uang Muka (DP):</label><input type="number" id="input_dp" value="0" oninput="updateInfoBayar()"></div>
+        <button class="btn-add" onclick="tambahItem()" style="margin-top:10px;">✚ TAMBAH ITEM</button>
+        <button onclick="prosesTransaksi()" style="background:var(--primary); color:white; border:none; padding:12px; margin-top:10px; cursor:pointer;">🖨️ SIMPAN & PRINT</button>
         <button onclick="location.reload()" style="background:#999; color:white; font-size:10px; border:none; margin-top:5px; cursor:pointer;">LOGOUT</button>
     </div>
 
@@ -98,12 +91,12 @@
         </div>
         <div class="table-cont">
             <table>
-                <thead><tr><th>Item Kaca</th><th>Ukuran</th><th>Detail Jasa</th><th>Subtotal</th><th class="no-print aksi-col">Aksi</th></tr></thead>
+                <thead><tr><th>Item</th><th>Ukuran</th><th>Detail</th><th>Subtotal</th><th class="no-print">Aksi</th></tr></thead>
                 <tbody id="billBody"></tbody>
             </table>
         </div>
         <div class="summary-box">
-            <div id="infoBayarDisplay" style="font-size:14px; line-height:1.5;"></div>
+            <div id="infoBayarDisplay"></div>
             <div id="totalDisplay" style="font-size:24px; font-weight:bold; color:var(--info);">TOTAL: Rp 0</div>
         </div>
     </div>
@@ -112,51 +105,46 @@
 <div id="adminModal">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>ADMIN PANEL & RIWAYAT PENJUALAN</h2>
+            <h2>ADMIN PANEL</h2>
             <button onclick="tutupAdmin()" style="width:100px; background:var(--danger); color:white; border:none; padding:10px; cursor:pointer;">TUTUP</button>
         </div>
         <hr>
 
-        <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #ffeeba;">
-            <h3 style="margin-top:0;">📋 Riwayat Penjualan (Klik Status untuk Ubah ke Lunas)</h3>
-            <div style="max-height: 300px; overflow: auto; background: white;">
-                <table id="historyTable">
-                    <thead style="background:#eee;">
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Pembeli</th>
-                            <th>Total Belanja</th>
-                            <th>DP Paid</th>
-                            <th>Sisa Tagihan</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyBody"></tbody>
-                </table>
+        <div style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #90caf9;">
+            <h4>🏢 Pengaturan Kop Nota & Telepon</h4>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                <input type="text" id="editKopNama" placeholder="Nama Toko">
+                <input type="text" id="editKopAlamat" placeholder="Alamat">
+                <input type="text" id="editKopTelp" placeholder="No. Telp">
             </div>
+            <button onclick="updateKop()" style="background:var(--info); color:white; font-weight:bold; margin-top:10px;">SIMPAN DATA KOP</button>
+        </div>
+
+        <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px;">
+            <h4>📋 Riwayat Transaksi (Klik Status untuk Melunasi)</h4>
+            <div style="max-height: 200px; overflow: auto; background: white;"><table id="historyTable">
+                <thead><tr><th>Tgl</th><th>Pembeli</th><th>Total</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody id="historyBody"></tbody>
+            </table></div>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-            <div style="background:#e3f2fd; padding:15px; border-radius:8px; border:1px solid #90caf9;">
-                <h4>🏢 Edit Kop Nota</h4>
-                <label>Nama Toko:</label><input type="text" id="editKopNama">
-                <label>Alamat:</label><input type="text" id="editKopAlamat">
-                <label>No. Telp:</label><input type="text" id="editKopTelp">
-                <button onclick="updateKop()" style="background:var(--info); color:white; font-weight:bold; margin-top:10px;">SIMPAN PERUBAHAN KOP</button>
-            </div>
-            
-            <div style="background:#f9f9f9; padding:15px; border-radius:8px; border:1px solid #ddd;">
+            <div style="background:#f9f9f9; padding:15px; border-radius:8px;">
                 <h4>💎 Master Harga Kaca</h4>
                 <div style="max-height:150px; overflow:auto;"><table id="adminKacaTable"></table></div>
                 <hr>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                    <input type="text" id="admNama" placeholder="Nama Kaca">
-                    <input type="number" id="admHarga" placeholder="Harga /m2">
-                    <input type="number" id="admGM" placeholder="Gosok /m">
-                    <input type="number" id="admBor" placeholder="Bor /titik">
-                </div>
-                <button onclick="updateHarga()" style="background:var(--success); color:white; margin-top:10px;">+ TAMBAH / UPDATE KACA</button>
+                <input type="text" id="admNama" placeholder="Nama Kaca">
+                <input type="number" id="admHarga" placeholder="Harga /m2">
+                <button onclick="updateHarga()" style="background:var(--success); color:white; margin-top:10px;">+ UPDATE KACA</button>
+            </div>
+            
+            <div style="background:#eee; padding:15px; border-radius:8px;">
+                <h4>👥 Manajemen User / Karyawan</h4>
+                <div style="max-height:150px; overflow:auto;"><table id="userTableBody" style="background:white;"></table></div>
+                <hr>
+                <input type="text" id="newUsername" placeholder="Username Baru">
+                <input type="password" id="newPassword" placeholder="Password">
+                <button onclick="tambahUser()" style="background:var(--info); color:white;">+ TAMBAH USER</button>
             </div>
         </div>
     </div>
@@ -174,12 +162,12 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const dbRef = firebase.database().ref('mitra_kaca_v81');
+    const dbRef = firebase.database().ref('mitra_kaca_v811');
 
     let db = {
         inventory: { "Clear 5mm": { harga: 300000, gm: 15000, bor: 5000, pojok: 5000, tepi: 7000, bev2: 15000, bev3: 20000 } },
         users: [{user: "admin", pass: "admin123", role: "admin"}],
-        kop: { nama: "MITRA ALUMINIUM", alamat: "Jl. Raya Utama No. 1", telp: "08123456789" },
+        kop: { nama: "MITRA ALUMINIUM", alamat: "Alamat Toko", telp: "0812..." },
         history: []
     };
 
@@ -187,11 +175,8 @@
     let currentTotal = 0;
 
     dbRef.on('value', (snapshot) => {
-        if(snapshot.val()) {
-            db = snapshot.val();
-            renderUI();
-            document.getElementById('loadStatus').innerText = "System Online";
-        } else { saveDB(); }
+        if(snapshot.val()) { db = snapshot.val(); renderUI(); document.getElementById('loadStatus').innerText = "Database Connected"; }
+        else { saveDB(); }
     });
 
     function saveDB() { dbRef.set(db); }
@@ -205,7 +190,7 @@
             document.getElementById('displayUser').innerText = "User: " + u;
             if(f.role === 'admin') document.getElementById('btnAdmin').style.display = 'block';
             renderUI();
-        } else { alert("User/Pass Salah!"); }
+        } else { alert("Login Gagal!"); }
     }
 
     function renderUI() {
@@ -215,30 +200,23 @@
         const sel = document.getElementById('selKaca'); sel.innerHTML = "";
         for (let k in db.inventory) sel.innerHTML += `<option value="${k}">${k}</option>`;
         document.getElementById('tgl_input').value = new Date().toISOString().split('T')[0];
-        document.getElementById('liveDate').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+        document.getElementById('liveDate').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
     }
 
     function updateInfoBayar() {
-        const isHutang = document.getElementById('status_bayar').value === "Belum Lunas";
-        document.getElementById('area_dp').style.display = isHutang ? "block" : "none";
+        const isH = document.getElementById('status_bayar').value === "Belum Lunas";
+        document.getElementById('area_dp').style.display = isH ? "block" : "none";
         const dp = parseFloat(document.getElementById('input_dp').value) || 0;
-        const sisa = currentTotal - dp;
-        
-        let txt = isHutang ? `<b>Status:</b> Hutang<br><b>DP:</b> Rp ${dp.toLocaleString()}<br><b>Sisa:</b> Rp ${sisa.toLocaleString()}` : `<b>Status:</b> Lunas`;
-        document.getElementById('infoBayarDisplay').innerHTML = txt;
+        document.getElementById('infoBayarDisplay').innerHTML = isH ? `SISA: Rp ${(currentTotal - dp).toLocaleString()}` : "LUNAS";
     }
 
     function tambahItem() {
         const p = parseFloat(document.getElementById('p').value), l = parseFloat(document.getElementById('l').value);
         const k = document.getElementById('selKaca').value, d = db.inventory[k];
         if(!p || !l) return;
-        const bev = document.getElementById('bevel').value;
         const keliling = (2 * (p/100)) + (2 * (l/100));
-        let h_bev = (bev === 'bev2') ? keliling * d.bev2 : (bev === 'bev3' ? keliling * d.bev3 : 0);
-        
-        const sub = ((p/100 * l/100) * d.harga) + (keliling * d.gm) + h_bev + (parseInt(document.getElementById('bor').value)*d.bor) + (parseInt(document.getElementById('pojok').value)*d.pojok) + (parseInt(document.getElementById('tepi').value)*d.tepi);
-        
-        keranjang.push({ jenis: k, p, l, subtotal: sub, detail: `B:${document.getElementById('bor').value}, Bev:${bev}` });
+        const sub = ((p/100 * l/100) * d.harga) + (keliling * d.gm) + (parseInt(document.getElementById('bor').value)*d.bor);
+        keranjang.push({ jenis: k, p, l, subtotal: sub, detail: "Bor:" + document.getElementById('bor').value });
         renderBill();
     }
 
@@ -246,7 +224,7 @@
         const body = document.getElementById('billBody'); body.innerHTML = ""; currentTotal = 0;
         keranjang.forEach((it, i) => {
             currentTotal += it.subtotal;
-            body.innerHTML += `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>${it.detail}</td><td>Rp ${Math.round(it.subtotal).toLocaleString()}</td><td class="no-print aksi-col"><button onclick="keranjang.splice(${i},1);renderBill();" style="background:red; color:white; border:none; padding:5px; cursor:pointer;">X</button></td></tr>`;
+            body.innerHTML += `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>${it.detail}</td><td>Rp ${Math.round(it.subtotal).toLocaleString()}</td><td class="no-print"><button onclick="keranjang.splice(${i},1);renderBill();">X</button></td></tr>`;
         });
         document.getElementById('totalDisplay').innerText = "TOTAL: Rp " + Math.round(currentTotal).toLocaleString();
         updateInfoBayar();
@@ -254,29 +232,19 @@
 
     function prosesTransaksi() {
         if(keranjang.length === 0) return;
-        const tgl = document.getElementById('tgl_input').value;
-        const dpVal = parseFloat(document.getElementById('input_dp').value) || 0;
-        const status = document.getElementById('status_bayar').value;
-
-        // Data untuk History
         if(!db.history) db.history = [];
+        const isLunas = document.getElementById('status_bayar').value === "Lunas";
         db.history.push({
             id: Date.now(),
-            tgl,
+            tgl: document.getElementById('tgl_input').value,
             pembeli: document.getElementById('pembeli').value || "Umum",
             total: Math.round(currentTotal),
-            dp: status === "Lunas" ? Math.round(currentTotal) : dpVal,
-            status: status
+            dp: isLunas ? Math.round(currentTotal) : (parseFloat(document.getElementById('input_dp').value) || 0),
+            status: document.getElementById('status_bayar').value
         });
-
         document.getElementById('printPembeli').innerText = "Pembeli: " + (document.getElementById('pembeli').value || "Umum");
-        document.getElementById('printTanggal').innerText = "Tgl: " + tgl;
-        
-        saveDB();
-        window.print();
-        keranjang = [];
-        document.getElementById('input_dp').value = 0;
-        renderBill();
+        document.getElementById('printTanggal').innerText = "Tgl: " + document.getElementById('tgl_input').value;
+        saveDB(); window.print(); keranjang = []; renderBill();
     }
 
     function bukaAdmin() {
@@ -284,74 +252,50 @@
         document.getElementById('editKopNama').value = db.kop.nama;
         document.getElementById('editKopAlamat').value = db.kop.alamat;
         document.getElementById('editKopTelp').value = db.kop.telp;
-        renderHistory();
-        renderAdminKaca();
+        renderHistory(); renderAdminKaca(); renderUsers();
     }
 
     function renderHistory() {
         const body = document.getElementById('historyBody'); body.innerHTML = "";
         if(!db.history) return;
         db.history.slice().reverse().forEach(h => {
-            const sisa = h.total - h.dp;
-            const tag = h.status === 'Lunas' ? `<span class="status-tag tag-lunas">LUNAS</span>` : `<span class="status-tag tag-hutang" onclick="ubahKeLunas(${h.id})">HUTANG (KLIK JADI LUNAS)</span>`;
-            
-            body.innerHTML += `<tr>
-                <td>${h.tgl}</td>
-                <td>${h.pembeli}</td>
-                <td>Rp ${h.total.toLocaleString()}</td>
-                <td>Rp ${h.dp.toLocaleString()}</td>
-                <td>Rp ${sisa.toLocaleString()}</td>
-                <td>${tag}</td>
-                <td><button onclick="hapusHistory(${h.id})" style="background:#666; color:white; border:none; padding:4px;">Hapus</button></td>
-            </tr>`;
+            const tag = h.status === 'Lunas' ? `<span class="status-tag tag-lunas">LUNAS</span>` : `<span class="status-tag tag-hutang" onclick="ubahLunas(${h.id})">HUTANG</span>`;
+            body.innerHTML += `<tr><td>${h.tgl}</td><td>${h.pembeli}</td><td>${h.total.toLocaleString()}</td><td>${(h.total-h.dp).toLocaleString()}</td><td>${tag}</td><td><button onclick="hapusH(${h.id})">X</button></td></tr>`;
         });
     }
 
-    function ubahKeLunas(id) {
-        if(confirm("Ubah transaksi ini menjadi LUNAS?")) {
-            const index = db.history.findIndex(x => x.id === id);
-            db.history[index].status = "Lunas";
-            db.history[index].dp = db.history[index].total;
-            saveDB();
-            renderHistory();
-        }
-    }
-
-    function hapusHistory(id) {
-        if(confirm("Hapus data riwayat ini?")) {
-            db.history = db.history.filter(x => x.id !== id);
-            saveDB();
-            renderHistory();
-        }
-    }
+    function ubahLunas(id) { if(confirm("Lunasi transaksi?")) { const i = db.history.findIndex(x=>x.id===id); db.history[i].status="Lunas"; db.history[i].dp=db.history[i].total; saveDB(); renderHistory(); } }
+    function hapusH(id) { if(confirm("Hapus?")) { db.history = db.history.filter(x=>x.id!==id); saveDB(); renderHistory(); } }
 
     function renderAdminKaca() {
         const t = document.getElementById('adminKacaTable'); t.innerHTML = "";
-        for (let k in db.inventory) {
-            t.innerHTML += `<tr><td>${k}</td><td>Rp ${db.inventory[k].harga.toLocaleString()}</td><td><button onclick="deleteKaca('${k}')">Hapus</button></td></tr>`;
-        }
+        for (let k in db.inventory) t.innerHTML += `<tr><td>${k}</td><td>Rp ${db.inventory[k].harga.toLocaleString()}</td><td><button onclick="delKaca('${k}')">Hapus</button></td></tr>`;
     }
 
     function updateHarga() {
-        const n = document.getElementById('admNama').value;
-        if(!n) return;
-        db.inventory[n] = {
-            harga: parseInt(document.getElementById('admHarga').value) || 0,
-            gm: parseInt(document.getElementById('admGM').value) || 0,
-            bor: parseInt(document.getElementById('admBor').value) || 0,
-            pojok: 5000, tepi: 7000, bev2: 15000, bev3: 20000
-        };
-        saveDB(); renderAdminKaca(); alert("Data Kaca Diperbarui!");
+        const n = document.getElementById('admNama').value; if(!n) return;
+        db.inventory[n] = { harga: parseInt(document.getElementById('admHarga').value), gm: 15000, bor: 5000, pojok: 5000, tepi: 7000, bev2: 15000, bev3: 20000 };
+        saveDB(); renderAdminKaca();
     }
+    function delKaca(k) { delete db.inventory[k]; saveDB(); renderAdminKaca(); }
+
+    function renderUsers() {
+        const t = document.getElementById('userTableBody'); t.innerHTML = "";
+        db.users.forEach((u, i) => { t.innerHTML += `<tr><td>${u.user}</td><td><button onclick="gantiP(${i})">Pass</button> <button onclick="delU(${i})">X</button></td></tr>`; });
+    }
+    function tambahUser() { 
+        const u = document.getElementById('newUsername').value, p = document.getElementById('newPassword').value;
+        if(u && p) { db.users.push({user: u, pass: p, role: 'user'}); saveDB(); renderUsers(); }
+    }
+    function gantiP(i) { const p = prompt("Password Baru:"); if(p) { db.users[i].pass = p; saveDB(); } }
+    function delU(i) { if(confirm("Hapus user?")) { db.users.splice(i,1); saveDB(); renderUsers(); } }
 
     function updateKop() {
         db.kop.nama = document.getElementById('editKopNama').value;
         db.kop.alamat = document.getElementById('editKopAlamat').value;
         db.kop.telp = document.getElementById('editKopTelp').value;
-        saveDB(); alert("Kop Berhasil Disimpan!");
+        saveDB(); alert("Kop Tersimpan!");
     }
-
-    function deleteKaca(k) { delete db.inventory[k]; saveDB(); renderAdminKaca(); }
     function tutupAdmin() { document.getElementById('adminModal').style.display = 'none'; }
     renderUI();
 </script>
