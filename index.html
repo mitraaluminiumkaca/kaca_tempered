@@ -43,13 +43,25 @@
         .admin-input-group { display: flex; flex-direction: column; margin-bottom: 5px; }
         .admin-input-group label { font-size: 10px; font-weight: bold; color: #555; margin-bottom: 2px; }
 
-        @media print {
-            @page { size: A5 landscape; margin: 10mm; }
-            .sidebar, .no-print, #adminModal, #loginScreen, .watermark { display: none !important; }
-            #mainApp { display: block; }
-            .main { padding: 0; border: none; }
-            .kop-nota { display: block; }
-        }
+       @media print {
+    @page { 
+        size: A5 landscape; 
+        margin: 5mm; /* Memperkecil margin agar area cetak lebih luas */
+    }
+    .sidebar, .no-print, #adminModal, #loginScreen, .watermark { display: none !important; }
+    #mainApp { display: block; width: 100%; }
+    .main { padding: 0; border: none; width: 100%; }
+    .kop-nota { display: block; margin-bottom: 10px; }
+    
+    /* Memastikan tabel menyesuaikan lebar kertas A5 */
+    table { 
+        width: 100%; 
+        font-size: 11px; /* Mengecilkan font sedikit agar muat */
+    }
+    th, td { padding: 5px; }
+    .summary-box { border: none; padding: 5px; }
+}
+
     </style>
 </head>
 <body>
