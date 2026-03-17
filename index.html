@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir Mitra Kaca v8.1.1 - Full Admin</title>
+    <title>Kasir Mitra Kaca v8.1.2 - Full Features</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -27,7 +27,9 @@
         .tag-lunas { background: #d4edda; color: #155724; }
         .tag-hutang { background: #f8d7da; color: #721c24; }
         .kop-nota { display: none; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        
+        .admin-input-group { display: flex; flex-direction: column; margin-bottom: 5px; }
+        .admin-input-group label { font-size: 10px; font-weight: bold; color: #555; margin-bottom: 2px; }
+
         @media print {
             @page { size: A5 landscape; margin: 10mm; }
             .sidebar, .no-print, #adminModal, #loginScreen { display: none !important; }
@@ -55,7 +57,7 @@
             <h3 id="displayUser">User</h3>
             <div id="liveDate" style="font-size: 11px; color: #666;"></div>
         </div>
-        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">🔒 PANEL ADMIN & USER</button>
+        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">🔒 PANEL ADMIN LENGKAP</button>
         <hr>
         <label>Tanggal:</label><input type="date" id="tgl_input">
         <label>Nama Pembeli:</label><input type="text" id="pembeli" placeholder="Nama Pelanggan">
@@ -76,7 +78,7 @@
         <div id="area_dp" style="display:none;"><label>Uang Muka (DP):</label><input type="number" id="input_dp" value="0" oninput="updateInfoBayar()"></div>
         <button class="btn-add" onclick="tambahItem()" style="margin-top:10px;">✚ TAMBAH ITEM</button>
         <button onclick="prosesTransaksi()" style="background:var(--primary); color:white; border:none; padding:12px; margin-top:10px; cursor:pointer;">🖨️ SIMPAN & PRINT</button>
-        <button onclick="location.reload()" style="background:#999; color:white; font-size:10px; border:none; margin-top:5px; cursor:pointer;">LOGOUT</button>
+        <button onclick="location.reload()" style="background:#999; color:white; font-size:10px; border:none; margin-top:5px; cursor:pointer;">LOGOUT / REFRESH</button>
     </div>
 
     <div class="main">
@@ -105,23 +107,23 @@
 <div id="adminModal">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>ADMIN PANEL</h2>
+            <h2>ADMIN PANEL LENGKAP</h2>
             <button onclick="tutupAdmin()" style="width:100px; background:var(--danger); color:white; border:none; padding:10px; cursor:pointer;">TUTUP</button>
         </div>
         <hr>
 
         <div style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #90caf9;">
-            <h4>🏢 Pengaturan Kop Nota & Telepon</h4>
+            <h4>🏢 1. Pengaturan Kop Nota & Telepon</h4>
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                 <input type="text" id="editKopNama" placeholder="Nama Toko">
                 <input type="text" id="editKopAlamat" placeholder="Alamat">
-                <input type="text" id="editKopTelp" placeholder="No. Telp">
+                <input type="text" id="editKopTelp" placeholder="No. Telp / WA">
             </div>
-            <button onclick="updateKop()" style="background:var(--info); color:white; font-weight:bold; margin-top:10px;">SIMPAN DATA KOP</button>
+            <button onclick="updateKop()" style="background:var(--info); color:white; font-weight:bold; margin-top:10px;">SIMPAN PERUBAHAN KOP</button>
         </div>
 
-        <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px;">
-            <h4>📋 Riwayat Transaksi (Klik Status untuk Melunasi)</h4>
+        <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #ffeeba;">
+            <h4>📋 2. Riwayat Transaksi (Klik Status untuk Melunasi)</h4>
             <div style="max-height: 200px; overflow: auto; background: white;"><table id="historyTable">
                 <thead><tr><th>Tgl</th><th>Pembeli</th><th>Total</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody id="historyBody"></tbody>
@@ -129,22 +131,32 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-            <div style="background:#f9f9f9; padding:15px; border-radius:8px;">
-                <h4>💎 Master Harga Kaca</h4>
-                <div style="max-height:150px; overflow:auto;"><table id="adminKacaTable"></table></div>
-                <hr>
-                <input type="text" id="admNama" placeholder="Nama Kaca">
-                <input type="number" id="admHarga" placeholder="Harga /m2">
-                <button onclick="updateHarga()" style="background:var(--success); color:white; margin-top:10px;">+ UPDATE KACA</button>
+            <div style="background:#f9f9f9; padding:15px; border-radius:8px; border:1px solid #ddd;">
+                <h4>💎 3. Master Harga Kaca & Jasa</h4>
+                <div style="max-height:150px; overflow:auto; background:white; margin-bottom:10px;">
+                    <table id="adminKacaTable"></table>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <div class="admin-input-group"><label>Nama Kaca:</label><input type="text" id="admNama" placeholder="Clear 5mm"></div>
+                    <div class="admin-input-group"><label>Harga/m2:</label><input type="number" id="admHarga"></div>
+                    <div class="admin-input-group"><label>Gosok/m:</label><input type="number" id="admGM"></div>
+                    <div class="admin-input-group"><label>Bor/titik:</label><input type="number" id="admBor"></div>
+                    <div class="admin-input-group"><label>CP (Pojok):</label><input type="number" id="admPojok"></div>
+                    <div class="admin-input-group"><label>CT (Tepi):</label><input type="number" id="admTepi"></div>
+                    <div class="admin-input-group"><label>Bev 2cm/m:</label><input type="number" id="admBev2"></div>
+                    <div class="admin-input-group"><label>Bev 3cm/m:</label><input type="number" id="admBev3"></div>
+                </div>
+                <button onclick="updateHarga()" style="background:var(--success); color:white; margin-top:10px; font-weight:bold;">SIMPAN / UPDATE DATA KACA</button>
             </div>
             
-            <div style="background:#eee; padding:15px; border-radius:8px;">
-                <h4>👥 Manajemen User / Karyawan</h4>
-                <div style="max-height:150px; overflow:auto;"><table id="userTableBody" style="background:white;"></table></div>
-                <hr>
+            <div style="background:#eee; padding:15px; border-radius:8px; border:1px solid #ccc;">
+                <h4>👥 4. Manajemen User</h4>
+                <div style="max-height:150px; overflow:auto; background:white; margin-bottom:10px;">
+                    <table id="userTableBody"></table>
+                </div>
                 <input type="text" id="newUsername" placeholder="Username Baru">
                 <input type="password" id="newPassword" placeholder="Password">
-                <button onclick="tambahUser()" style="background:var(--info); color:white;">+ TAMBAH USER</button>
+                <button onclick="tambahUser()" style="background:var(--info); color:white; font-weight:bold;">TAMBAH USER</button>
             </div>
         </div>
     </div>
@@ -162,12 +174,12 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const dbRef = firebase.database().ref('mitra_kaca_v811');
+    const dbRef = firebase.database().ref('mitra_kaca_v812');
 
     let db = {
         inventory: { "Clear 5mm": { harga: 300000, gm: 15000, bor: 5000, pojok: 5000, tepi: 7000, bev2: 15000, bev3: 20000 } },
         users: [{user: "admin", pass: "admin123", role: "admin"}],
-        kop: { nama: "MITRA ALUMINIUM", alamat: "Alamat Toko", telp: "0812..." },
+        kop: { nama: "MITRA ALUMINIUM", alamat: "Jl. Alamat Toko", telp: "0812345678" },
         history: []
     };
 
@@ -175,7 +187,7 @@
     let currentTotal = 0;
 
     dbRef.on('value', (snapshot) => {
-        if(snapshot.val()) { db = snapshot.val(); renderUI(); document.getElementById('loadStatus').innerText = "Database Connected"; }
+        if(snapshot.val()) { db = snapshot.val(); renderUI(); document.getElementById('loadStatus').innerText = "Database Online"; }
         else { saveDB(); }
     });
 
@@ -190,7 +202,7 @@
             document.getElementById('displayUser').innerText = "User: " + u;
             if(f.role === 'admin') document.getElementById('btnAdmin').style.display = 'block';
             renderUI();
-        } else { alert("Login Gagal!"); }
+        } else { alert("User/Pass Salah!"); }
     }
 
     function renderUI() {
@@ -207,16 +219,21 @@
         const isH = document.getElementById('status_bayar').value === "Belum Lunas";
         document.getElementById('area_dp').style.display = isH ? "block" : "none";
         const dp = parseFloat(document.getElementById('input_dp').value) || 0;
-        document.getElementById('infoBayarDisplay').innerHTML = isH ? `SISA: Rp ${(currentTotal - dp).toLocaleString()}` : "LUNAS";
+        document.getElementById('infoBayarDisplay').innerHTML = isH ? `<b>SISA TAGIHAN: Rp ${(currentTotal - dp).toLocaleString()}</b>` : "<b>STATUS: LUNAS</b>";
     }
 
     function tambahItem() {
         const p = parseFloat(document.getElementById('p').value), l = parseFloat(document.getElementById('l').value);
         const k = document.getElementById('selKaca').value, d = db.inventory[k];
         if(!p || !l) return;
+        
         const keliling = (2 * (p/100)) + (2 * (l/100));
-        const sub = ((p/100 * l/100) * d.harga) + (keliling * d.gm) + (parseInt(document.getElementById('bor').value)*d.bor);
-        keranjang.push({ jenis: k, p, l, subtotal: sub, detail: "Bor:" + document.getElementById('bor').value });
+        const bev = document.getElementById('bevel').value;
+        let h_bev = (bev === 'bev2') ? keliling * d.bev2 : (bev === 'bev3' ? keliling * d.bev3 : 0);
+        
+        const sub = ((p/100 * l/100) * d.harga) + (keliling * d.gm) + h_bev + (parseInt(document.getElementById('bor').value)*d.bor) + (parseInt(document.getElementById('pojok').value)*d.pojok) + (parseInt(document.getElementById('tepi').value)*d.tepi);
+        
+        keranjang.push({ jenis: k, p, l, subtotal: sub, detail: `Bor:${document.getElementById('bor').value}, Bev:${bev}` });
         renderBill();
     }
 
@@ -259,25 +276,47 @@
         const body = document.getElementById('historyBody'); body.innerHTML = "";
         if(!db.history) return;
         db.history.slice().reverse().forEach(h => {
-            const tag = h.status === 'Lunas' ? `<span class="status-tag tag-lunas">LUNAS</span>` : `<span class="status-tag tag-hutang" onclick="ubahLunas(${h.id})">HUTANG</span>`;
+            const tag = h.status === 'Lunas' ? `<span class="status-tag tag-lunas">LUNAS</span>` : `<span class="status-tag tag-hutang" onclick="ubahLunas(${h.id})">HUTANG (KLIK LUNASI)</span>`;
             body.innerHTML += `<tr><td>${h.tgl}</td><td>${h.pembeli}</td><td>${h.total.toLocaleString()}</td><td>${(h.total-h.dp).toLocaleString()}</td><td>${tag}</td><td><button onclick="hapusH(${h.id})">X</button></td></tr>`;
         });
     }
 
-    function ubahLunas(id) { if(confirm("Lunasi transaksi?")) { const i = db.history.findIndex(x=>x.id===id); db.history[i].status="Lunas"; db.history[i].dp=db.history[i].total; saveDB(); renderHistory(); } }
-    function hapusH(id) { if(confirm("Hapus?")) { db.history = db.history.filter(x=>x.id!==id); saveDB(); renderHistory(); } }
+    function ubahLunas(id) { if(confirm("Lunasi transaksi ini?")) { const i = db.history.findIndex(x=>x.id===id); db.history[i].status="Lunas"; db.history[i].dp=db.history[i].total; saveDB(); renderHistory(); } }
+    function hapusH(id) { if(confirm("Hapus riwayat?")) { db.history = db.history.filter(x=>x.id!==id); saveDB(); renderHistory(); } }
 
     function renderAdminKaca() {
-        const t = document.getElementById('adminKacaTable'); t.innerHTML = "";
-        for (let k in db.inventory) t.innerHTML += `<tr><td>${k}</td><td>Rp ${db.inventory[k].harga.toLocaleString()}</td><td><button onclick="delKaca('${k}')">Hapus</button></td></tr>`;
+        const t = document.getElementById('adminKacaTable'); t.innerHTML = "<thead><tr><th>Jenis Kaca</th><th>Harga/m2</th><th>Aksi</th></tr></thead><tbody>";
+        for (let k in db.inventory) t.innerHTML += `<tr><td>${k}</td><td>Rp ${db.inventory[k].harga.toLocaleString()}</td><td><button onclick="isiEdit('${k}')">Edit</button> <button onclick="delKaca('${k}')">Hapus</button></td></tr>`;
+        t.innerHTML += "</tbody>";
+    }
+
+    function isiEdit(k) {
+        const d = db.inventory[k];
+        document.getElementById('admNama').value = k;
+        document.getElementById('admHarga').value = d.harga;
+        document.getElementById('admGM').value = d.gm;
+        document.getElementById('admBor').value = d.bor;
+        document.getElementById('admPojok').value = d.pojok;
+        document.getElementById('admTepi').value = d.tepi;
+        document.getElementById('admBev2').value = d.bev2;
+        document.getElementById('admBev3').value = d.bev3;
     }
 
     function updateHarga() {
         const n = document.getElementById('admNama').value; if(!n) return;
-        db.inventory[n] = { harga: parseInt(document.getElementById('admHarga').value), gm: 15000, bor: 5000, pojok: 5000, tepi: 7000, bev2: 15000, bev3: 20000 };
-        saveDB(); renderAdminKaca();
+        db.inventory[n] = {
+            harga: parseInt(document.getElementById('admHarga').value) || 0,
+            gm: parseInt(document.getElementById('admGM').value) || 0,
+            bor: parseInt(document.getElementById('admBor').value) || 0,
+            pojok: parseInt(document.getElementById('admPojok').value) || 0,
+            tepi: parseInt(document.getElementById('admTepi').value) || 0,
+            bev2: parseInt(document.getElementById('admBev2').value) || 0,
+            bev3: parseInt(document.getElementById('admBev3').value) || 0
+        };
+        saveDB(); renderAdminKaca(); alert("Data Kaca Berhasil Disimpan!");
     }
-    function delKaca(k) { delete db.inventory[k]; saveDB(); renderAdminKaca(); }
+    
+    function delKaca(k) { if(confirm("Hapus " + k + "?")) { delete db.inventory[k]; saveDB(); renderAdminKaca(); } }
 
     function renderUsers() {
         const t = document.getElementById('userTableBody'); t.innerHTML = "";
@@ -287,14 +326,14 @@
         const u = document.getElementById('newUsername').value, p = document.getElementById('newPassword').value;
         if(u && p) { db.users.push({user: u, pass: p, role: 'user'}); saveDB(); renderUsers(); }
     }
-    function gantiP(i) { const p = prompt("Password Baru:"); if(p) { db.users[i].pass = p; saveDB(); } }
+    function gantiP(i) { const p = prompt("Password Baru:"); if(p) { db.users[i].pass = p; saveDB(); alert("Berhasil!"); } }
     function delU(i) { if(confirm("Hapus user?")) { db.users.splice(i,1); saveDB(); renderUsers(); } }
 
     function updateKop() {
         db.kop.nama = document.getElementById('editKopNama').value;
         db.kop.alamat = document.getElementById('editKopAlamat').value;
         db.kop.telp = document.getElementById('editKopTelp').value;
-        saveDB(); alert("Kop Tersimpan!");
+        saveDB(); alert("Kop Berhasil Disimpan!");
     }
     function tutupAdmin() { document.getElementById('adminModal').style.display = 'none'; }
     renderUI();
