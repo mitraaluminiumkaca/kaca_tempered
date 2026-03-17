@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir Mitra Kaca v8.0.7 - Online Firebase</title>
+    <title>Kasir Mitra Kaca v8.0.8 - Online Firebase</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -107,6 +107,16 @@
             <button onclick="tutupAdmin()" style="width:100px; background:#999; color:white; border:none; padding:8px;">TUTUP</button>
         </div>
         <hr>
+        
+        <div style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #90caf9;">
+            <h4>🏢 Pengaturan Kop Surat (Nota)</h4>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="admin-input-group"><label>Nama Toko:</label><input type="text" id="editKopNama" placeholder="Contoh: MITRA ALUMUNIUM"></div>
+                <div class="admin-input-group"><label>Alamat / No. HP:</label><input type="text" id="editKopAlamat" placeholder="Alamat lengkap toko"></div>
+            </div>
+            <button onclick="updateKop()" style="background:var(--info); color:white; margin-top:10px; font-weight:bold;">UPDATE KOP NOTA</button>
+        </div>
+
         <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px;">
             <h4>📋 Riwayat Transaksi</h4>
             <div style="max-height: 200px; overflow: auto; background: white;"><table id="historyTable">
@@ -114,6 +124,7 @@
                 <tbody id="historyBody"></tbody>
             </table></div>
         </div>
+
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
             <div style="background:#f9f9f9; padding:15px; border-radius:8px;">
                 <h4>Update Harga & Kaca</h4>
@@ -143,7 +154,6 @@
 </div>
 
 <script>
-    // --- KONFIGURASI FIREBASE ANDA ---
     const firebaseConfig = {
         apiKey: "AIzaSyBR3fru12WF1sq4Bb0JFFNPVfu9G4h93ME",
         authDomain: "mitra-tempered.firebaseapp.com",
@@ -194,10 +204,18 @@
 
     function renderUI() {
         document.getElementById('kopNama').innerText = db.kop.nama;
+        document.getElementById('kopAlamat').innerText = db.kop.alamat;
         const sel = document.getElementById('selKaca'); sel.innerHTML = "";
         for (let k in db.inventory) { sel.innerHTML += `<option value="${k}">${k}</option>`; }
         document.getElementById('tgl_input').value = new Date().toISOString().split('T')[0];
         document.getElementById('liveDate').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+    }
+
+    function updateKop() {
+        db.kop.nama = document.getElementById('editKopNama').value;
+        db.kop.alamat = document.getElementById('editKopAlamat').value;
+        saveDB();
+        alert("Kop Surat Berhasil Diperbarui!");
     }
 
     function tambahItem() {
@@ -230,7 +248,13 @@
         saveDB(); window.print(); keranjang = []; renderBill();
     }
 
-    function bukaAdmin() { document.getElementById('adminModal').style.display = 'block'; renderHistory(); renderAdminTable(); renderUserTable(); }
+    function bukaAdmin() { 
+        document.getElementById('adminModal').style.display = 'block'; 
+        document.getElementById('editKopNama').value = db.kop.nama;
+        document.getElementById('editKopAlamat').value = db.kop.alamat;
+        renderHistory(); renderAdminTable(); renderUserTable(); 
+    }
+    
     function renderHistory() {
         const hBody = document.getElementById('historyBody'); hBody.innerHTML = "";
         if(!db.history) return;
