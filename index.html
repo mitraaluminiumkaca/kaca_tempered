@@ -107,7 +107,7 @@
             <h3 id="displayUser">User</h3>
             <div id="liveDate" style="font-size: 11px; color: #666;"></div>
         </div>
-        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">🔒 PANEL ADMIN LENGKAP</button>
+        <button id="btnAdmin" onclick="bukaAdmin()" style="background:var(--info); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">📂 RIWAYAT & CETAK BON</button>
         <hr>
         <label>Tanggal:</label><input type="date" id="tgl_input">
         <label>Nama Pembeli:</label><input type="text" id="pembeli" placeholder="Nama Pelanggan">
@@ -356,12 +356,32 @@
     }
 
     function bukaAdmin() {
-        document.getElementById('adminModal').style.display = 'block';
-        document.getElementById('editKopNama').value = db.kop.nama;
-        document.getElementById('editKopAlamat').value = db.kop.alamat;
-        document.getElementById('editKopTelp').value = db.kop.telp;
-        renderHistory(); renderAdminKaca(); renderUsers();
+    document.getElementById('adminModal').style.display = 'block';
+    
+    // Cek apakah user yang login adalah admin
+    const isAdmin = (document.getElementById('displayUser').innerText.includes("admin")) || 
+                    (db.users.find(u => u.user === document.getElementById('displayUser').innerText.replace("Kasir: ", "") && u.role === 'admin'));
+
+    // Sembunyikan/Tampilkan bagian Admin berdasarkan role
+    const adminSections = document.querySelectorAll('.modal-content > div:not(:first-child)');
+    adminSections.forEach((section, index) => {
+        // Logika: Bagian 1 (Riwayat) selalu tampil, bagian lainnya (Kop, Harga, User) hanya untuk admin
+        if(index > 0) { 
+            section.style.display = isAdmin ? 'block' : 'none';
+        }
+    });
+
+    document.getElementById('editKopNama').value = db.kop.nama;
+    document.getElementById('editKopAlamat').value = db.kop.alamat;
+    document.getElementById('editKopTelp').value = db.kop.telp;
+    
+    renderHistory(); 
+    if(isAdmin) {
+        renderAdminKaca(); 
+        renderUsers();
     }
+}
+
 
     function renderHistory() {
         const body = document.getElementById('historyBody'); body.innerHTML = "";
