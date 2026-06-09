@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir Mitra Kaca v8.1.9 - Download PDF Instan</title>
+    <title>Kasir Mitra Kaca v8.2.0 - Perbaikan PDF</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -43,16 +43,20 @@
         .admin-input-group { display: flex; flex-direction: column; margin-bottom: 5px; }
         .admin-input-group label { font-size: 10px; font-weight: bold; color: #555; margin-bottom: 2px; }
 
-        /* Wadah Tersembunyi Khusus Pemrosesan File PDF */
+        /* PERBAIKAN: Mengubah teknik sembunyi agar terbaca oleh html2canvas bawaan html2pdf */
         #pdf-render-area {
             position: absolute;
-            left: -9999px;
-            top: -9999px;
-            width: 148mm; /* Standar Lebar A5 */
+            top: 0;
+            left: 0;
+            width: 140mm; 
             background: white;
             color: black;
-            padding: 10mm;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding: 5mm;
+            font-family: Arial, sans-serif;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            z-index: -100;
         }
 
 @media print {
@@ -424,7 +428,7 @@
         }, 350);
     }
 
-    // FUNGSI INTI BARU: Merender dan Mengunduh File PDF Secara Instan Ke Perangkat Komputer
+    // PERBAIKAN UTAMA: Penambahan sistem delay agar HTML2PDF tidak menangkap kertas kosong
     function unduhBonPDF(id) {
         const h = db.history.find(x => x.id === id);
         if (!h) return;
@@ -435,60 +439,71 @@
         let tBody = "";
         if(h.items && h.items.length > 0) {
             h.items.forEach(it => {
-                tBody += `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>${it.qty || 1} Pcs</td><td>${it.detail}</td><td>Rp ${Math.round(it.subtotal).toLocaleString()}</td></tr>`;
+                tBody += `<tr>
+                    <td style="padding: 7px; border: 1px solid #000;">${it.jenis}</td>
+                    <td style="padding: 7px; border: 1px solid #000;">${it.p}x${it.l}</td>
+                    <td style="padding: 7px; border: 1px solid #000;">${it.qty || 1} Pcs</td>
+                    <td style="padding: 7px; border: 1px solid #000;">${it.detail}</td>
+                    <td style="padding: 7px; border: 1px solid #000;">Rp ${Math.round(it.subtotal).toLocaleString()}</td>
+                </tr>`;
             });
         } else {
-            tBody += `<tr><td>Transaksi Global</td><td>-</td><td>1 Pcs</td><td>Rincian item lama</td><td>Rp ${h.total.toLocaleString()}</td></tr>`;
+            tBody += `<tr>
+                <td style="padding: 7px; border: 1px solid #000;">Transaksi Global</td>
+                <td style="padding: 7px; border: 1px solid #000;">-</td>
+                <td style="padding: 7px; border: 1px solid #000;">1 Pcs</td>
+                <td style="padding: 7px; border: 1px solid #000;">Rincian item lama</td>
+                <td style="padding: 7px; border: 1px solid #000;">Rp ${h.total.toLocaleString()}</td>
+            </tr>`;
         }
 
-        // Susun HTML Khusus untuk Struktur Mesin HTML2PDF
         const htmlKontenPDF = `
-            <div style="padding: 5px; font-family: Arial, sans-serif; color: #000; font-size: 12px;">
-                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-                    <h2 style="margin: 0; font-size: 20px; text-transform: uppercase;">${db.kop.nama}</h2>
-                    <p style="margin: 3px 0; font-size: 11px;">${db.kop.alamat}</p>
-                    <p style="margin: 3px 0; font-size: 11px;">Telp: ${db.kop.telp}</p>
+            <div style="padding: 10px; background: white; color: black;">
+                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 15px;">
+                    <h2 style="margin: 0; font-size: 22px; text-transform: uppercase; font-weight: bold;">${db.kop.nama}</h2>
+                    <p style="margin: 4px 0; font-size: 12px;">${db.kop.alamat}</p>
+                    <p style="margin: 4px 0; font-size: 12px;">Telp: ${db.kop.telp}</p>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 12px;">
                     <span><b>Pelanggan:</b> ${h.pembeli}</span>
                     <span><b>Tanggal:</b> ${h.tgl}</span>
                 </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px;">
                     <thead>
-                        <tr style="background: #f2f2f2;">
-                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Item Kaca</th>
-                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Ukuran</th>
-                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Qty</th>
-                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Detail Jasa</th>
-                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Subtotal</th>
+                        <tr style="background: #e6e6e6;">
+                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Item Kaca</th>
+                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Ukuran</th>
+                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Qty</th>
+                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Detail Jasa</th>
+                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>${tBody}</tbody>
                 </table>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; font-size: 13px;">
                     <div>${infoBayarText}</div>
-                    <div style="font-size: 16px; font-weight: bold; border-bottom: 1px double #000;">TOTAL: Rp ${h.total.toLocaleString()}</div>
+                    <div style="font-size: 16px; font-weight: bold; border-bottom: 2px double #000; padding-bottom: 2px;">TOTAL: Rp ${h.total.toLocaleString()}</div>
                 </div>
             </div>
         `;
 
-        // Masukkan ke area render tersembunyi
         const areaRender = document.getElementById('pdf-render-area');
         areaRender.innerHTML = htmlKontenPDF;
 
-        // Aturan Konfigurasi Konversi PDF ke ukuran A5 Pas portrait
         const opsiKonfigurasi = {
-            margin:       8,
+            margin:       10,
             filename:     `BON_${h.pembeli.replace(/\s+/g, '_')}_${h.tgl}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
             jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
         };
 
-        // Eksekusi download PDF instan tanpa mengganggu halaman kasir aktif
-        html2pdf().set(opsiKonfigurasi).from(areaRender).save().then(() => {
-            areaRender.innerHTML = ""; // Bersihkan memori render area kembali
-        });
+        // Memberikan jeda waktu 500ms agar engine browser selesai merender data HTML sebelum dipotong ke PDF
+        setTimeout(() => {
+            html2pdf().set(opsiKonfigurasi).from(areaRender).save().then(() => {
+                areaRender.innerHTML = ""; 
+            });
+        }, 500);
     }
 
     function buatTemplateNotaHTML(h, tBody, infoBayarText) {
