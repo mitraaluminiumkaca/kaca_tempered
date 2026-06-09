@@ -2,9 +2,10 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir Mitra Kaca v8.1.7 - Kuantitas Item</title>
+    <title>Kasir Mitra Kaca v8.1.9 - Download PDF Instan</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; --info: #2980b9; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f4f4f4; position: relative; min-height: 100vh; }
@@ -42,12 +43,24 @@
         .admin-input-group { display: flex; flex-direction: column; margin-bottom: 5px; }
         .admin-input-group label { font-size: 10px; font-weight: bold; color: #555; margin-bottom: 2px; }
 
+        /* Wadah Tersembunyi Khusus Pemrosesan File PDF */
+        #pdf-render-area {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 148mm; /* Standar Lebar A5 */
+            background: white;
+            color: black;
+            padding: 10mm;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
 @media print {
     @page { 
         size: A5 portrait; 
         margin: 5mm; 
     }
-    .sidebar, .no-print, #adminModal, #loginScreen, .watermark { 
+    .sidebar, .no-print, #adminModal, #loginScreen, .watermark, #pdf-render-area { 
         display: none !important; 
     }
     #mainApp { 
@@ -90,6 +103,8 @@
 <body>
 
 <div class="watermark">by AlpheTech</div>
+
+<div id="pdf-render-area"></div>
 
 <div id="loginScreen">
     <div class="login-box">
@@ -299,7 +314,6 @@
         const bev = document.getElementById('bevel').value;
         let h_bev = (bev === 'bev2') ? keliling * d.bev2 : (bev === 'bev3' ? keliling * d.bev3 : 0);
         
-        // Rumus total dikali dengan jumlah kuantitas (qty) kaca
         const subSatuan = ((p/100 * l/100) * d.harga) + (keliling * d.gm) + h_bev + (parseInt(document.getElementById('bor').value)*d.bor) + (parseInt(document.getElementById('pojok').value)*d.pojok) + (parseInt(document.getElementById('tepi').value)*d.tepi);
         const subTotalAkhir = subSatuan * qty;
 
@@ -312,7 +326,6 @@
             detail: `Bor:${document.getElementById('bor').value}, Bev:${bev}` 
         });
         
-        // Reset qty ke angka 1 setelah input dimasukkan
         document.getElementById('qty_item').value = "1";
         renderBill();
     }
@@ -376,8 +389,9 @@
                 <td>${(h.total-h.dp).toLocaleString()}</td>
                 <td>${tag}</td>
                 <td>
-                    <button onclick="cetakUlangInstan(${h.id})" style="background:var(--success); color:white; font-size:10px; width:auto; display:inline-block; margin-right:5px; padding:3px 8px; cursor:pointer;">🖨️ PRINT BON</button>
-                    <button onclick="hapusH(${h.id})">X</button>
+                    <button onclick="cetakUlangInstan(${h.id})" style="background:var(--success); color:white; font-size:10px; width:auto; display:inline-block; margin-right:2px; padding:3px 6px; cursor:pointer;">🖨️ CETAK</button>
+                    <button onclick="unduhBonPDF(${h.id})" style="background:var(--info); color:white; font-size:10px; width:auto; display:inline-block; margin-right:2px; padding:3px 6px; cursor:pointer;">💾 PDF</button>
+                    <button onclick="hapusH(${h.id})" style="width:auto; display:inline-block; padding:3px 6px;">X</button>
                 </td>
             </tr>`;
         });
@@ -400,8 +414,85 @@
             tBody += `<tr><td>Transaksi Global</td><td>-</td><td>1 Pcs</td><td>Rincian item lama</td><td>Rp ${h.total.toLocaleString()}</td></tr>`;
         }
 
-        let htmlNota = `
-            <html>
+        let htmlNota = buatTemplateNotaHTML(h, tBody, infoBayarText);
+        prntWin.document.write(htmlNota);
+        prntWin.document.close();
+
+        prntWin.setTimeout(() => {
+            prntWin.print();
+            prntWin.close();
+        }, 350);
+    }
+
+    // FUNGSI INTI BARU: Merender dan Mengunduh File PDF Secara Instan Ke Perangkat Komputer
+    function unduhBonPDF(id) {
+        const h = db.history.find(x => x.id === id);
+        if (!h) return;
+
+        const sisa = h.total - h.dp;
+        const infoBayarText = h.status === "Belum Lunas" ? `<strong>SISA: Rp ${sisa.toLocaleString()}</strong> (DP: Rp ${h.dp.toLocaleString()})` : "<strong>STATUS: LUNAS</strong>";
+
+        let tBody = "";
+        if(h.items && h.items.length > 0) {
+            h.items.forEach(it => {
+                tBody += `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>${it.qty || 1} Pcs</td><td>${it.detail}</td><td>Rp ${Math.round(it.subtotal).toLocaleString()}</td></tr>`;
+            });
+        } else {
+            tBody += `<tr><td>Transaksi Global</td><td>-</td><td>1 Pcs</td><td>Rincian item lama</td><td>Rp ${h.total.toLocaleString()}</td></tr>`;
+        }
+
+        // Susun HTML Khusus untuk Struktur Mesin HTML2PDF
+        const htmlKontenPDF = `
+            <div style="padding: 5px; font-family: Arial, sans-serif; color: #000; font-size: 12px;">
+                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
+                    <h2 style="margin: 0; font-size: 20px; text-transform: uppercase;">${db.kop.nama}</h2>
+                    <p style="margin: 3px 0; font-size: 11px;">${db.kop.alamat}</p>
+                    <p style="margin: 3px 0; font-size: 11px;">Telp: ${db.kop.telp}</p>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 11px;">
+                    <span><b>Pelanggan:</b> ${h.pembeli}</span>
+                    <span><b>Tanggal:</b> ${h.tgl}</span>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <thead>
+                        <tr style="background: #f2f2f2;">
+                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Item Kaca</th>
+                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Ukuran</th>
+                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Qty</th>
+                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Detail Jasa</th>
+                            <th style="padding: 6px; border: 1px solid #000; text-align: left;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tBody}</tbody>
+                </table>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; font-size: 13px;">
+                    <div>${infoBayarText}</div>
+                    <div style="font-size: 16px; font-weight: bold; border-bottom: 1px double #000;">TOTAL: Rp ${h.total.toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+
+        // Masukkan ke area render tersembunyi
+        const areaRender = document.getElementById('pdf-render-area');
+        areaRender.innerHTML = htmlKontenPDF;
+
+        // Aturan Konfigurasi Konversi PDF ke ukuran A5 Pas portrait
+        const opsiKonfigurasi = {
+            margin:       8,
+            filename:     `BON_${h.pembeli.replace(/\s+/g, '_')}_${h.tgl}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+        };
+
+        // Eksekusi download PDF instan tanpa mengganggu halaman kasir aktif
+        html2pdf().set(opsiKonfigurasi).from(areaRender).save().then(() => {
+            areaRender.innerHTML = ""; // Bersihkan memori render area kembali
+        });
+    }
+
+    function buatTemplateNotaHTML(h, tBody, infoBayarText) {
+        return `<html>
             <head>
                 <title>Nota Transaksi - ${h.pembeli}</title>
                 <style>
@@ -437,14 +528,6 @@
                 </div>
             </body>
             </html>`;
-
-        prntWin.document.write(htmlNota);
-        prntWin.document.close();
-
-        prntWin.setTimeout(() => {
-            prntWin.print();
-            prntWin.close();
-        }, 350);
     }
 
     function ubahLunas(id) { if(confirm("Lunasi?")) { const i = db.history.findIndex(x=>x.id===id); db.history[i].status="Lunas"; db.history[i].dp=db.history[i].total; saveDB(); renderHistory(); } }
