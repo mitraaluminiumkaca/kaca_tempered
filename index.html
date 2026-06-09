@@ -107,7 +107,7 @@
             <h3 id="displayUser">User</h3>
             <div id="liveDate" style="font-size: 11px; color: #666;"></div>
         </div>
-        <button id="btnAdmin" onclick="bukaAdmin()" style="background:var(--info); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">📂 RIWAYAT & CETAK BON</button>
+        <button id="btnAdmin" onclick="bukaAdmin()" style="display:block; background:var(--info); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">📂 RIWAYAT & CETAK BON</button>
         <hr>
         <label>Tanggal:</label><input type="date" id="tgl_input">
         <label>Nama Pembeli:</label><input type="text" id="pembeli" placeholder="Nama Pelanggan">
@@ -158,56 +158,58 @@
 <div id="adminModal">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>ADMIN PANEL</h2>
+            <h2>PANEL RIWAYAT & DATA</h2>
             <button onclick="tutupAdmin()" style="width:100px; background:var(--danger); color:white; border:none; padding:10px; cursor:pointer;">TUTUP</button>
         </div>
         <hr>
 
-        <div style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #90caf9;">
-            <h4>🏢 1. Pengaturan Kop Nota & Telepon</h4>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-                <input type="text" id="editKopNama" placeholder="Nama Toko">
-                <input type="text" id="editKopAlamat" placeholder="Alamat">
-                <input type="text" id="editKopTelp" placeholder="No. Telp">
-            </div>
-            <button onclick="updateKop()" style="background:var(--info); color:white; font-weight:bold; margin-top:10px;">SIMPAN PERUBAHAN KOP</button>
-        </div>
-
         <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #ffeeba;">
-            <h4>📋 2. Riwayat Transaksi</h4>
+            <h4>📋 Riwayat Transaksi</h4>
             <div style="max-height: 200px; overflow: auto; background: white;"><table id="historyTable">
                 <thead><tr><th>Tgl</th><th>Pembeli</th><th>Total</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody id="historyBody"></tbody>
             </table></div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-            <div style="background:#f9f9f9; padding:15px; border-radius:8px; border:1px solid #ddd;">
-                <h4>💎 3. Master Harga Kaca & Jasa</h4>
-                <div style="max-height:150px; overflow:auto; background:white; margin-bottom:10px;">
-                    <table id="adminKacaTable"></table>
+        <div id="superAdminSection" style="display:none;">
+            <div style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #90caf9;">
+                <h4>🏢 1. Pengaturan Kop Nota & Telepon</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                    <input type="text" id="editKopNama" placeholder="Nama Toko">
+                    <input type="text" id="editKopAlamat" placeholder="Alamat">
+                    <input type="text" id="editKopTelp" placeholder="No. Telp">
                 </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                    <div class="admin-input-group"><label>Nama Kaca:</label><input type="text" id="admNama" placeholder="Clear 5mm"></div>
-                    <div class="admin-input-group"><label>Harga/m2:</label><input type="number" id="admHarga"></div>
-                    <div class="admin-input-group"><label>Gosok/m:</label><input type="number" id="admGM"></div>
-                    <div class="admin-input-group"><label>Bor/titik:</label><input type="number" id="admBor"></div>
-                    <div class="admin-input-group"><label>CP (Pojok):</label><input type="number" id="admPojok"></div>
-                    <div class="admin-input-group"><label>CT (Tepi):</label><input type="number" id="admTepi"></div>
-                    <div class="admin-input-group"><label>Bev 2cm/m:</label><input type="number" id="admBev2"></div>
-                    <div class="admin-input-group"><label>Bev 3cm/m:</label><input type="number" id="admBev3"></div>
-                </div>
-                <button onclick="updateHarga()" style="background:var(--success); color:white; margin-top:10px; font-weight:bold;">SIMPAN / UPDATE DATA KACA</button>
+                <button onclick="updateKop()" style="background:var(--info); color:white; font-weight:bold; margin-top:10px;">SIMPAN PERUBAHAN KOP</button>
             </div>
-            
-            <div style="background:#eee; padding:15px; border-radius:8px; border:1px solid #ccc;">
-                <h4>👥 4. Manajemen User</h4>
-                <div style="max-height:150px; overflow:auto; background:white; margin-bottom:10px;">
-                    <table id="userTableBody"></table>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <div style="background:#f9f9f9; padding:15px; border-radius:8px; border:1px solid #ddd;">
+                    <h4>💎 2. Master Harga Kaca & Jasa</h4>
+                    <div style="max-height:150px; overflow:auto; background:white; margin-bottom:10px;">
+                        <table id="adminKacaTable"></table>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                        <div class="admin-input-group"><label>Nama Kaca:</label><input type="text" id="admNama" placeholder="Clear 5mm"></div>
+                        <div class="admin-input-group"><label>Harga/m2:</label><input type="number" id="admHarga"></div>
+                        <div class="admin-input-group"><label>Gosok/m:</label><input type="number" id="admGM"></div>
+                        <div class="admin-input-group"><label>Bor/titik:</label><input type="number" id="admBor"></div>
+                        <div class="admin-input-group"><label>CP (Pojok):</label><input type="number" id="admPojok"></div>
+                        <div class="admin-input-group"><label>CT (Tepi):</label><input type="number" id="admTepi"></div>
+                        <div class="admin-input-group"><label>Bev 2cm/m:</label><input type="number" id="admBev2"></div>
+                        <div class="admin-input-group"><label>Bev 3cm/m:</label><input type="number" id="admBev3"></div>
+                    </div>
+                    <button onclick="updateHarga()" style="background:var(--success); color:white; margin-top:10px; font-weight:bold;">SIMPAN / UPDATE DATA KACA</button>
                 </div>
-                <input type="text" id="newUsername" placeholder="Username Baru">
-                <input type="password" id="newPassword" placeholder="Password">
-                <button onclick="tambahUser()" style="background:var(--info); color:white; font-weight:bold;">TAMBAH USER</button>
+                
+                <div style="background:#eee; padding:15px; border-radius:8px; border:1px solid #ccc;">
+                    <h4>👥 3. Manajemen User</h4>
+                    <div style="max-height:150px; overflow:auto; background:white; margin-bottom:10px;">
+                        <table id="userTableBody"></table>
+                    </div>
+                    <input type="text" id="newUsername" placeholder="Username Baru">
+                    <input type="password" id="newPassword" placeholder="Password">
+                    <button onclick="tambahUser()" style="background:var(--info); color:white; font-weight:bold;">TAMBAH USER</button>
+                </div>
             </div>
         </div>
     </div>
@@ -236,6 +238,7 @@
 
     let keranjang = [];
     let currentTotal = 0;
+    let loggedInRole = "user"; // Menyimpan role user yang sedang aktif
 
     dbRef.on('value', (snapshot) => {
         if(snapshot.val()) { 
@@ -266,10 +269,10 @@
     }
 
     function masukSistemUtama(username, role) {
+        loggedInRole = role; // Simpan hak akses role ke variabel global
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainApp').style.display = 'flex';
         document.getElementById('displayUser').innerText = "Kasir: " + username;
-        if(role === 'admin') document.getElementById('btnAdmin').style.display = 'block';
         renderUI();
     }
 
@@ -299,7 +302,6 @@
         const bev = document.getElementById('bevel').value;
         let h_bev = (bev === 'bev2') ? keliling * d.bev2 : (bev === 'bev3' ? keliling * d.bev3 : 0);
         
-        // Rumus total dikali dengan jumlah kuantitas (qty) kaca
         const subSatuan = ((p/100 * l/100) * d.harga) + (keliling * d.gm) + h_bev + (parseInt(document.getElementById('bor').value)*d.bor) + (parseInt(document.getElementById('pojok').value)*d.pojok) + (parseInt(document.getElementById('tepi').value)*d.tepi);
         const subTotalAkhir = subSatuan * qty;
 
@@ -312,7 +314,6 @@
             detail: `Bor:${document.getElementById('bor').value}, Bev:${bev}` 
         });
         
-        // Reset qty ke angka 1 setelah input dimasukkan
         document.getElementById('qty_item').value = "1";
         renderBill();
     }
@@ -356,39 +357,34 @@
     }
 
     function bukaAdmin() {
-    document.getElementById('adminModal').style.display = 'block';
-    
-    // Cek apakah user yang login adalah admin
-    const isAdmin = (document.getElementById('displayUser').innerText.includes("admin")) || 
-                    (db.users.find(u => u.user === document.getElementById('displayUser').innerText.replace("Kasir: ", "") && u.role === 'admin'));
-
-    // Sembunyikan/Tampilkan bagian Admin berdasarkan role
-    const adminSections = document.querySelectorAll('.modal-content > div:not(:first-child)');
-    adminSections.forEach((section, index) => {
-        // Logika: Bagian 1 (Riwayat) selalu tampil, bagian lainnya (Kop, Harga, User) hanya untuk admin
-        if(index > 0) { 
-            section.style.display = isAdmin ? 'block' : 'none';
+        document.getElementById('adminModal').style.display = 'block';
+        
+        // Cek role user, jika 'admin' maka buka akses menu pengaturan tambahan
+        if (loggedInRole === 'admin') {
+            document.getElementById('superAdminSection').style.display = 'block';
+            document.getElementById('editKopNama').value = db.kop.nama;
+            document.getElementById('editKopAlamat').value = db.kop.alamat;
+            document.getElementById('editKopTelp').value = db.kop.telp;
+            renderAdminKaca(); 
+            renderUsers();
+        } else {
+            document.getElementById('superAdminSection').style.display = 'none';
         }
-    });
-
-    document.getElementById('editKopNama').value = db.kop.nama;
-    document.getElementById('editKopAlamat').value = db.kop.alamat;
-    document.getElementById('editKopTelp').value = db.kop.telp;
-    
-    renderHistory(); 
-    if(isAdmin) {
-        renderAdminKaca(); 
-        renderUsers();
+        
+        renderHistory(); 
     }
-}
-
 
     function renderHistory() {
         const body = document.getElementById('historyBody'); body.innerHTML = "";
         if(!db.history) return;
         db.history.slice().reverse().forEach(h => {
-            const tag = h.status === 'Lunas' ? `<span class="status-tag tag-lunas">LUNAS</span>` : `<span class="status-tag tag-hutang" onclick="ubahLunas(${h.id})">HUTANG</span>`;
+            // Jika bukan admin, matikan fungsi click ubah status piutang agar aman
+            const tagClick = loggedInRole === 'admin' ? `onclick="ubahLunas(${h.id})"` : `onclick="alert('Hanya admin yang dapat melunasi piutang!')"`;
+            const tag = h.status === 'Lunas' ? `<span class="status-tag tag-lunas">LUNAS</span>` : `<span class="status-tag tag-hutang" ${tagClick}>HUTANG</span>`;
             
+            // Tombol hapus (X) hanya ditampilkan jika yang login adalah admin
+            const tombolHapus = loggedInRole === 'admin' ? `<button onclick="hapusH(${h.id})">X</button>` : '';
+
             body.innerHTML += `<tr>
                 <td>${h.tgl}</td>
                 <td>${h.pembeli}</td>
@@ -397,7 +393,7 @@
                 <td>${tag}</td>
                 <td>
                     <button onclick="cetakUlangInstan(${h.id})" style="background:var(--success); color:white; font-size:10px; width:auto; display:inline-block; margin-right:5px; padding:3px 8px; cursor:pointer;">🖨️ PRINT BON</button>
-                    <button onclick="hapusH(${h.id})">X</button>
+                    ${tombolHapus}
                 </td>
             </tr>`;
         });
