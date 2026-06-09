@@ -42,4 +42,117 @@
 <div id="mainApp">
     <div class="sidebar">
         <h3 id="displayUser">User</h3>
-        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; padding:10px; margin-bottom:10px
+        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; padding:10px; margin-bottom:10px; cursor:pointer;">🔒 PANEL ADMIN</button>
+        <hr>
+        <label>Tanggal:</label><input type="date" id="tgl_input">
+        <label>Nama Pembeli:</label><input type="text" id="pembeli" placeholder="Nama Pelanggan">
+        <div class="row"><input type="number" id="p" placeholder="P"> <span>x</span> <input type="number" id="l" placeholder="L"></div>
+        <input type="number" id="qty_item" value="1" min="1">
+        <select id="selKaca"></select>
+        <select id="bevel"><option value="none">Tanpa Bevel</option><option value="bev2">Bevel 2cm</option><option value="bev3">Bevel 3cm</option></select>
+        <div class="row"><span>Bor</span><input type="number" id="bor" value="0"> <span>CP</span><input type="number" id="pojok" value="0"></div>
+        <select id="status_bayar" onchange="updateInfoBayar()">
+            <option value="Lunas">Lunas</option>
+            <option value="Belum Lunas">Belum Lunas</option>
+        </select>
+        <div id="area_dp" style="display:none;"><input type="number" id="input_dp" placeholder="DP" oninput="updateInfoBayar()"></div>
+        <button class="btn-add" onclick="tambahItem()">✚ TAMBAH ITEM</button>
+        <button onclick="prosesTransaksi()" style="background:var(--primary); color:white; border:none; padding:12px; margin-top:10px; cursor:pointer;">🖨️ SIMPAN & PRINT</button>
+    </div>
+
+    <div class="main">
+        <div class="table-cont">
+            <table><thead><tr><th>Item</th><th>Ukuran</th><th>Qty</th><th>Subtotal</th><th>Aksi</th></tr></thead><tbody id="billBody"></tbody></table>
+        </div>
+        <div class="summary-box">
+            <div id="infoBayarDisplay"></div>
+            <div id="totalDisplay" style="font-size:24px; font-weight:bold;">TOTAL: Rp 0</div>
+        </div>
+    </div>
+</div>
+
+<div id="adminModal">
+    <div class="modal-content">
+        <button onclick="document.getElementById('adminModal').style.display='none'">TUTUP</button>
+        <h3>RIWAYAT TRANSAKSI</h3>
+        <div style="max-height: 400px; overflow: auto;">
+            <table id="historyTable">
+                <thead><tr><th>Tgl</th><th>Pembeli</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBR3fru12WF1sq4Bb0JFFNPVfu9G4h93ME",
+        authDomain: "mitra-tempered.firebaseapp.com",
+        projectId: "mitra-tempered",
+        databaseURL: "https://mitra-tempered-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const dbRef = firebase.database().ref('mitra_kaca_final');
+    let db = { inventory: {"Clear 5mm": {harga:300000, gm:15000, bor:5000, pojok:5000, tepi:7000, bev2:15000, bev3:20000}}, users: [{user:"admin", pass:"admin123", role:"admin"}], kop:{nama:"MITRA", alamat:"-", telp:"-"}, history: [] };
+    let keranjang = [];
+    let currentTotal = 0;
+
+    dbRef.on('value', (s) => { if(s.val()) db = s.val(); renderUI(); });
+
+    function renderUI() {
+        const sel = document.getElementById('selKaca'); sel.innerHTML = "";
+        for (let k in db.inventory) sel.innerHTML += `<option value="${k}">${k}</option>`;
+        document.getElementById('tgl_input').value = new Date().toISOString().split('T')[0];
+    }
+
+    function tambahItem() {
+        const p=parseFloat(document.getElementById('p').value), l=parseFloat(document.getElementById('l').value), qty=parseInt(document.getElementById('qty_item').value);
+        const k = document.getElementById('selKaca').value, d = db.inventory[k];
+        const sub = (((p/100 * l/100) * d.harga) + ((2*(p/100)+2*(l/100))*d.gm)) * qty;
+        keranjang.push({jenis:k, p, l, qty, subtotal:sub, detail:"-"});
+        renderBill();
+    }
+
+    function renderBill() {
+        const body = document.getElementById('billBody'); body.innerHTML = ""; currentTotal = 0;
+        keranjang.forEach((it, i) => {
+            currentTotal += it.subtotal;
+            body.innerHTML += `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>${it.qty}</td><td>Rp ${Math.round(it.subtotal).toLocaleString()}</td><td><button onclick="keranjang.splice(${i},1);renderBill()">X</button></td></tr>`;
+        });
+        document.getElementById('totalDisplay').innerText = "TOTAL: Rp " + Math.round(currentTotal).toLocaleString();
+    }
+
+    function prosesTransaksi() {
+        if(keranjang.length === 0) return;
+        const trans = { id:Date.now(), tgl:document.getElementById('tgl_input').value, pembeli:document.getElementById('pembeli').value, total:Math.round(currentTotal), status:document.getElementById('status_bayar').value, items:JSON.parse(JSON.stringify(keranjang)) };
+        db.history.push(trans);
+        dbRef.set(db);
+        keranjang = []; renderBill(); alert("Tersimpan!");
+    }
+
+    function bukaAdmin() {
+        document.getElementById('adminModal').style.display='block';
+        const body = document.getElementById('historyBody'); body.innerHTML = "";
+        db.history.slice().reverse().forEach(h => {
+            body.innerHTML += `<tr><td>${h.tgl}</td><td>${h.pembeli}</td><td>${h.total.toLocaleString()}</td><td>${h.status}</td><td><button onclick="cetakUlangInstan(${h.id})">🖨️ CETAK</button></td></tr>`;
+        });
+    }
+
+    function cetakUlangInstan(id) {
+        const h = db.history.find(x => x.id === id);
+        if (!h) return;
+        const prntWin = window.open('', '_blank', 'height=600,width=800');
+        let tBody = h.items.map(it => `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>${it.subtotal.toLocaleString()}</td></tr>`).join('');
+        prntWin.document.write(`<html><body><h2>${db.kop.nama}</h2><p>Pembeli: ${h.pembeli}</p><table>${tBody}</table><h3>TOTAL: Rp ${h.total.toLocaleString()}</h3><script>window.print(); window.onafterprint=()=>window.close()<\/script></body></html>`);
+        prntWin.document.close();
+    }
+    
+    function cekLogin() {
+        const u = document.getElementById('userLogin').value, p = document.getElementById('passLogin').value;
+        if(u==="admin" && p==="admin123") { document.getElementById('loginScreen').style.display='none'; document.getElementById('mainApp').style.display='flex'; document.getElementById('btnAdmin').style.display='block'; }
+    }
+    function updateInfoBayar() { document.getElementById('area_dp').style.display = document.getElementById('status_bayar').value==="Belum Lunas" ? "block" : "none"; }
+</script>
+</body>
+</html>
