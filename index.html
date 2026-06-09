@@ -87,8 +87,6 @@
         font-size: 18px !important; 
     }
 }
-
-
     </style>
 </head>
 <body>
@@ -177,7 +175,10 @@
         </div>
 
         <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #ffeeba;">
-            <h4>📋 2. Riwayat Transaksi</h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="margin:0;">📋 2. Riwayat Transaksi</h4>
+                <button onclick="simpanPDF()" style="width:auto; background:var(--info); color:white; font-weight:bold; padding:6px 15px; cursor:pointer;">📥 SIMPAN RIWAYAT (PDF)</button>
+            </div>
             <div style="max-height: 200px; overflow: auto; background: white;"><table id="historyTable">
                 <thead><tr><th>Tgl</th><th>Pembeli</th><th>Total</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody id="historyBody"></tbody>
@@ -388,6 +389,73 @@
         saveDB(); alert("Kop Berhasil Disimpan!");
     }
     function tutupAdmin() { document.getElementById('adminModal').style.display = 'none'; }
+
+    // Fungsi Tambahan untuk Ekspor Laporan Riwayat ke PDF bawaan Browser
+    function simpanPDF() {
+        const prntWin = window.open('', '', 'height=700,width=900');
+        let htmlContent = `
+            <html>
+            <head>
+                <title>Laporan Riwayat Transaksi - ${db.kop.nama}</title>
+                <style>
+                    body { font-family: 'Segoe UI', sans-serif; padding: 25px; color: #333; }
+                    .header { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; }
+                    .header h2 { margin: 0 0 5px 0; font-size: 22px; }
+                    .header p { margin: 3px 0; font-size: 12px; color: #555; }
+                    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+                    th, td { border: 1px solid #999; padding: 8px 10px; text-align: left; }
+                    th { background-color: #f2f2f2; font-weight: bold; }
+                    .text-right { text-align: right; }
+                    .status-lunas { color: #27ae60; font-weight: bold; }
+                    .status-hutang { color: #c0392b; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h2>LAPORAN RIWAYAT TRANSAKSI</h2>
+                    <h2>${db.kop.nama}</h2>
+                    <p>${db.kop.alamat} | Telp: ${db.kop.telp}</p>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Nama Pembeli</th>
+                            <th>Total Transaksi</th>
+                            <th>Sisa Pembayaran</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        
+        if(db.history && db.history.length > 0) {
+            db.history.slice().reverse().forEach(h => {
+                const sisa = h.total - h.dp;
+                const classStatus = h.status === 'Lunas' ? 'status-lunas' : 'status-hutang';
+                htmlContent += `
+                    <tr>
+                        <td>${h.tgl}</td>
+                        <td>${h.pembeli}</td>
+                        <td class="text-right">Rp ${h.total.toLocaleString()}</td>
+                        <td class="text-right">Rp ${sisa.toLocaleString()}</td>
+                        <td class="${classStatus}">${h.status.toUpperCase()}</td>
+                    </tr>`;
+            });
+        } else {
+            htmlContent += `<tr><td colspan="5" style="text-align:center; padding: 20px;">Belum ada riwayat data transaksi.</td></tr>`;
+        }
+        
+        htmlContent += `</tbody></table></body></html>`;
+        
+        prntWin.document.write(htmlContent);
+        prntWin.document.close();
+        
+        prntWin.setTimeout(() => {
+            prntWin.print();
+            prntWin.close();
+        }, 500);
+    }
+
     renderUI();
 </script>
 </body>
