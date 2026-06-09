@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir Mitra Kaca v8.2.0 - Perbaikan PDF</title>
+    <title>Kasir Mitra Kaca v8.2.1 - Fix PDF Permanen</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -43,28 +43,12 @@
         .admin-input-group { display: flex; flex-direction: column; margin-bottom: 5px; }
         .admin-input-group label { font-size: 10px; font-weight: bold; color: #555; margin-bottom: 2px; }
 
-        /* PERBAIKAN: Mengubah teknik sembunyi agar terbaca oleh html2canvas bawaan html2pdf */
-        #pdf-render-area {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 140mm; 
-            background: white;
-            color: black;
-            padding: 5mm;
-            font-family: Arial, sans-serif;
-            opacity: 0;
-            height: 0;
-            overflow: hidden;
-            z-index: -100;
-        }
-
 @media print {
     @page { 
         size: A5 portrait; 
         margin: 5mm; 
     }
-    .sidebar, .no-print, #adminModal, #loginScreen, .watermark, #pdf-render-area { 
+    .sidebar, .no-print, #adminModal, #loginScreen, .watermark { 
         display: none !important; 
     }
     #mainApp { 
@@ -107,8 +91,6 @@
 <body>
 
 <div class="watermark">by AlpheTech</div>
-
-<div id="pdf-render-area"></div>
 
 <div id="loginScreen">
     <div class="login-box">
@@ -428,7 +410,7 @@
         }, 350);
     }
 
-    // PERBAIKAN UTAMA: Penambahan sistem delay agar HTML2PDF tidak menangkap kertas kosong
+    // PERBAIKAN TOTAL: Menggunakan metode window sandbox terisolasi agar terbebas dari bug lembar kosong CSS
     function unduhBonPDF(id) {
         const h = db.history.find(x => x.id === id);
         if (!h) return;
@@ -440,70 +422,88 @@
         if(h.items && h.items.length > 0) {
             h.items.forEach(it => {
                 tBody += `<tr>
-                    <td style="padding: 7px; border: 1px solid #000;">${it.jenis}</td>
-                    <td style="padding: 7px; border: 1px solid #000;">${it.p}x${it.l}</td>
-                    <td style="padding: 7px; border: 1px solid #000;">${it.qty || 1} Pcs</td>
-                    <td style="padding: 7px; border: 1px solid #000;">${it.detail}</td>
-                    <td style="padding: 7px; border: 1px solid #000;">Rp ${Math.round(it.subtotal).toLocaleString()}</td>
+                    <td style="padding: 6px; border: 1px solid #000;">${it.jenis}</td>
+                    <td style="padding: 6px; border: 1px solid #000;">${it.p}x${it.l}</td>
+                    <td style="padding: 6px; border: 1px solid #000;">${it.qty || 1} Pcs</td>
+                    <td style="padding: 6px; border: 1px solid #000;">${it.detail}</td>
+                    <td style="padding: 6px; border: 1px solid #000;">Rp ${Math.round(it.subtotal).toLocaleString()}</td>
                 </tr>`;
             });
         } else {
             tBody += `<tr>
-                <td style="padding: 7px; border: 1px solid #000;">Transaksi Global</td>
-                <td style="padding: 7px; border: 1px solid #000;">-</td>
-                <td style="padding: 7px; border: 1px solid #000;">1 Pcs</td>
-                <td style="padding: 7px; border: 1px solid #000;">Rincian item lama</td>
-                <td style="padding: 7px; border: 1px solid #000;">Rp ${h.total.toLocaleString()}</td>
+                <td style="padding: 6px; border: 1px solid #000;">Transaksi Global</td>
+                <td style="padding: 6px; border: 1px solid #000;">-</td>
+                <td style="padding: 6px; border: 1px solid #000;">1 Pcs</td>
+                <td style="padding: 6px; border: 1px solid #000;">Rincian item lama</td>
+                <td style="padding: 6px; border: 1px solid #000;">Rp ${h.total.toLocaleString()}</td>
             </tr>`;
         }
 
-        const htmlKontenPDF = `
-            <div style="padding: 10px; background: white; color: black;">
-                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 15px;">
-                    <h2 style="margin: 0; font-size: 22px; text-transform: uppercase; font-weight: bold;">${db.kop.nama}</h2>
-                    <p style="margin: 4px 0; font-size: 12px;">${db.kop.alamat}</p>
-                    <p style="margin: 4px 0; font-size: 12px;">Telp: ${db.kop.telp}</p>
+        // Jalankan sandbox window tersembunyi
+        const sandBoxWin = window.open('', '', 'width=600,height=600,top=-1000,left=-1000');
+        
+        const htmlIsiPDF = `<html>
+            <head>
+                <title>PDF Temp</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 15px; color: #000; background: #fff; }
+                    .kop { text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 12px; }
+                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                </style>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+            </head>
+            <body>
+                <div id="capture-target">
+                    <div class="kop">
+                        <h2 style="margin:0; font-size:20px; text-transform:uppercase;">${db.kop.nama}</h2>
+                        <p style="margin:3px 0; font-size:11px;">${db.kop.alamat}</p>
+                        <p style="margin:3px 0; font-size:11px;">Telp: ${db.kop.telp}</p>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:11px;">
+                        <span><b>Pelanggan:</b> ${h.pembeli}</span>
+                        <span><b>Tanggal:</b> ${h.tgl}</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr style="background:#f2f2f2;">
+                                <th style="padding:6px; border:1px solid #000; text-align:left;">Item Kaca</th>
+                                <th style="padding:6px; border:1px solid #000; text-align:left;">Ukuran</th>
+                                <th style="padding:6px; border:1px solid #000; text-align:left;">Qty</th>
+                                <th style="padding:6px; border:1px solid #000; text-align:left;">Detail Jasa</th>
+                                <th style="padding:6px; border:1px solid #000; text-align:left;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tBody}</tbody>
+                    </table>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-size:12px;">
+                        <div>${infoBayarText}</div>
+                        <div style="font-size:15px; font-weight:bold; border-bottom:2px double #000;">TOTAL: Rp ${h.total.toLocaleString()}</div>
+                    </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 12px;">
-                    <span><b>Pelanggan:</b> ${h.pembeli}</span>
-                    <span><b>Tanggal:</b> ${h.tgl}</span>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px;">
-                    <thead>
-                        <tr style="background: #e6e6e6;">
-                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Item Kaca</th>
-                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Ukuran</th>
-                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Qty</th>
-                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Detail Jasa</th>
-                            <th style="padding: 7px; border: 1px solid #000; text-align: left;">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>${tBody}</tbody>
-                </table>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; font-size: 13px;">
-                    <div>${infoBayarText}</div>
-                    <div style="font-size: 16px; font-weight: bold; border-bottom: 2px double #000; padding-bottom: 2px;">TOTAL: Rp ${h.total.toLocaleString()}</div>
-                </div>
-            </div>
-        `;
+                <script>
+                    function generateNow() {
+                        const element = document.getElementById('capture-target');
+                        const opt = {
+                            margin: 8,
+                            filename: "BON_${h.pembeli.replace(/\s+/g, '_')}_${h.tgl}.pdf",
+                            html2canvas: { scale: 2 },
+                            jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+                        };
+                        html2pdf().set(opt).from(element).save().then(() => {
+                            window.close();
+                        });
+                    }
+                <\/script>
+            </body>
+        </html>`;
 
-        const areaRender = document.getElementById('pdf-render-area');
-        areaRender.innerHTML = htmlKontenPDF;
+        sandBoxWin.document.write(htmlIsiPDF);
+        sandBoxWin.document.close();
 
-        const opsiKonfigurasi = {
-            margin:       10,
-            filename:     `BON_${h.pembeli.replace(/\s+/g, '_')}_${h.tgl}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false },
-            jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
-        };
-
-        // Memberikan jeda waktu 500ms agar engine browser selesai merender data HTML sebelum dipotong ke PDF
-        setTimeout(() => {
-            html2pdf().set(opsiKonfigurasi).from(areaRender).save().then(() => {
-                areaRender.innerHTML = ""; 
-            });
-        }, 500);
+        // Berikan waktu jeda singkat agar window memuat skrip dengan sempurna
+        sandBoxWin.setTimeout(() => {
+            sandBoxWin.generateNow();
+        }, 400);
     }
 
     function buatTemplateNotaHTML(h, tBody, infoBayarText) {
