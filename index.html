@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir Mitra Kaca v8.1.3 - Final</title>
+    <title>Kasir Mitra Kaca v8.1.4 - Final Fix</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -24,16 +24,78 @@
         #adminModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; }
         .modal-content { background: white; width: 95%; margin: 10px auto; padding: 20px; border-radius: 8px; max-height: 95vh; overflow-y: auto; }
         
-        /* CSS UNTUK EMBOS / WATERMARK */
         .watermark {
             position: fixed;
             bottom: 10px;
             right: 15px;
             font-size: 10px;
-            color: #bdc3c7; /* Warna abu-abu samar agar efek embos */
+            color: #bdc3c7;
             font-style: italic;
-            pointer-events: none; /* Agar tidak bisa diklik/mengganggu */
+            pointer-events: none;
             z-index: 999;
+        }
+
+        .status-tag { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
+        .tag-lunas { background: #d4edda; color: #155724; }
+        .tag-hutang { background: #f8d7da; color: #721c24; }
+        .kop-nota { display: none; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .admin-input-group { display: flex; flex-direction: column; margin-bottom: 5px; }
+        .admin-input-group label { font-size: 10px; font-weight: bold; color: #555; margin-bottom: 2px; }
+
+@media print {
+    @page { 
+        size: A5 portrait; 
+        margin: 5mm; 
+    }
+    .sidebar, .no-print, #adminModal, #loginScreen, .watermark { 
+        display: none !important; 
+    }
+    #mainApp { 
+        display: block; 
+        width: 100%; 
+    }
+    .main { 
+        padding: 0; 
+        border: none; 
+        width: 100%; 
+    }
+    .kop-nota { 
+        display: block; 
+        text-align: center; 
+        margin-bottom: 15px; 
+    }
+    
+    table { 
+        width: 100%; 
+        font-size: 10px; 
+        border-collapse: collapse;
+    }
+    th, td { 
+        padding: 6px 4px; 
+        border-bottom: 1px solid #000; 
+    }
+    
+    .summary-box { 
+        display: block; 
+        text-align: right;
+        margin-top: 15px;
+        border: none;
+    }
+    #totalDisplay { 
+        font-size: 18px !important; 
+    }
+}
+    </style>
+</head>
+<body>
+
+<div class="watermark">by AlpheTech</div>
+
+<div id="loginScreen">
+    <div class="login-box">
+        <h2>MITRA ALUMINIUM</h2>
+        <input type="text" id="userLogin" placeholder="Username">
+        <input type="password" id="passLogin
         }
 
         .status-tag { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
