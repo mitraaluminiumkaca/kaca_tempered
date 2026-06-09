@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir Mitra Kaca v8.1.4 - Final Fix</title>
+    <title>Kasir Mitra Kaca v8.1.3 - Final</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -24,14 +24,15 @@
         #adminModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; }
         .modal-content { background: white; width: 95%; margin: 10px auto; padding: 20px; border-radius: 8px; max-height: 95vh; overflow-y: auto; }
         
+        /* CSS UNTUK EMBOS / WATERMARK */
         .watermark {
             position: fixed;
             bottom: 10px;
             right: 15px;
             font-size: 10px;
-            color: #bdc3c7;
+            color: #bdc3c7; /* Warna abu-abu samar agar efek embos */
             font-style: italic;
-            pointer-events: none;
+            pointer-events: none; /* Agar tidak bisa diklik/mengganggu */
             z-index: 999;
         }
 
@@ -65,9 +66,10 @@
         margin-bottom: 15px; 
     }
     
+    /* Penyesuaian Tabel agar muat di lebar kertas berdiri */
     table { 
         width: 100%; 
-        font-size: 10px; 
+        font-size: 10px; /* Ukuran font lebih kecil agar tidak pecah ke bawah */
         border-collapse: collapse;
     }
     th, td { 
@@ -76,7 +78,7 @@
     }
     
     .summary-box { 
-        display: block; 
+        display: block; /* Menyusun total di bawah, bukan di samping */
         text-align: right;
         margin-top: 15px;
         border: none;
@@ -213,6 +215,7 @@
 </div>
 
 <script>
+    // Konfigurasi Firebase Anda
     const firebaseConfig = {
         apiKey: "AIzaSyBR3fru12WF1sq4Bb0JFFNPVfu9G4h93ME",
         authDomain: "mitra-tempered.firebaseapp.com",
@@ -237,48 +240,22 @@
     let currentTotal = 0;
 
     dbRef.on('value', (snapshot) => {
-        if(snapshot.val()) { 
-            db = snapshot.val(); 
-            // Proteksi Tambahan: Jika data ditarik tapi folder users kosong, paksa isi admin
-            if(!db.users || db.users.length === 0) {
-                db.users = [{user: "admin", pass: "admin123", role: "admin"}];
-                saveDB();
-            }
-            renderUI(); 
-            document.getElementById('loadStatus').innerText = "System Ready"; 
-        }
-        else { 
-            // Jika database Firebase kosong sama sekali, kirim data master awal + user admin
-            saveDB(); 
-        }
+        if(snapshot.val()) { db = snapshot.val(); renderUI(); document.getElementById('loadStatus').innerText = "System Ready"; }
+        else { saveDB(); }
     });
 
     function saveDB() { dbRef.set(db); }
 
     function cekLogin() {
         const u = document.getElementById('userLogin').value, p = document.getElementById('passLogin').value;
-        
-        // Backup Offline Bypass: Jika Firebase mendadak RTO/Gagal koneksi, kasir tetap bisa dibuka pakai akun ini
-        if(u === "admin" && p === "admin123") {
-            masukSistemUtama(u, "admin");
-            return;
-        }
-
-        if(!db.users) db.users = [{user: "admin", pass: "admin123", role: "admin"}];
         const f = db.users.find(x => x.user === u && x.pass === p);
         if(f) {
-            masukSistemUtama(u, f.role);
-        } else { 
-            alert("User/Pass Salah!"); 
-        }
-    }
-
-    function masukSistemUtama(username, role) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'flex';
-        document.getElementById('displayUser').innerText = "Kasir: " + username;
-        if(role === 'admin') document.getElementById('btnAdmin').style.display = 'block';
-        renderUI();
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+            document.getElementById('displayUser').innerText = "Kasir: " + u;
+            if(f.role === 'admin') document.getElementById('btnAdmin').style.display = 'block';
+            renderUI();
+        } else { alert("User/Pass Salah!"); }
     }
 
     function renderUI() {
@@ -325,6 +302,7 @@
         if(!db.history) db.history = [];
         const isLunas = document.getElementById('status_bayar').value === "Lunas";
         
+        // Menyimpan data rincian keranjang saat ini ke riwayat agar bisa dicetak ulang secara utuh nanti
         const itemCopy = JSON.parse(JSON.stringify(keranjang));
         
         db.history.push({
@@ -334,7 +312,7 @@
             total: Math.round(currentTotal),
             dp: isLunas ? Math.round(currentTotal) : (parseFloat(document.getElementById('input_dp').value) || 0),
             status: document.getElementById('status_bayar').value,
-            items: itemCopy 
+            items: itemCopy // Menyimpan list belanjaan
         });
         document.getElementById('printPembeli').innerText = "Pembeli: " + (document.getElementById('pembeli').value || "Umum");
         document.getElementById('printTanggal').innerText = "Tgl: " + document.getElementById('tgl_input').value;
@@ -355,6 +333,7 @@
         db.history.slice().reverse().forEach(h => {
             const tag = h.status === 'Lunas' ? `<span class="status-tag tag-lunas">LUNAS</span>` : `<span class="status-tag tag-hutang" onclick="ubahLunas(${h.id})">HUTANG</span>`;
             
+            // Ditambahkan tombol Cetak Uang (Bon Lama) tanpa mengubah fungsi bawaan hapus/lunas
             body.innerHTML += `<tr>
                 <td>${h.tgl}</td>
                 <td>${h.pembeli}</td>
@@ -369,6 +348,7 @@
         });
     }
 
+    // Fungsi Baru untuk memuat dan mencetak ulang bon lama dalam bentuk format nota asli (PDF)
     function cetakUlangBon(id) {
         const h = db.history.find(x => x.id === id);
         if (!h) return;
@@ -383,6 +363,7 @@
                 tBody += `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>${it.detail}</td><td>Rp ${Math.round(it.subtotal).toLocaleString()}</td></tr>`;
             });
         } else {
+            // Jaga-jaga jika riwayat transaksi lama sebelum update ini tidak memiliki rincian array item
             tBody += `<tr><td>Transaksi Global</td><td>-</td><td>Rincian item lama tidak terekam</td><td>Rp ${h.total.toLocaleString()}</td></tr>`;
         }
 
