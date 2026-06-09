@@ -1,54 +1,45 @@
-<script>
-    // FUNGSI CETAK ULANG: Membuka jendela baru yang bersih dan langsung memicu print
-    function cetakUlangInstan(id) {
-        const h = db.history.find(x => x.id === id);
-        if (!h) return;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Kasir Mitra Kaca v8.2.2</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --success: #27ae60; --danger: #c0392b; --info: #2980b9; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f4f4f4; min-height: 100vh; }
+        #loginScreen { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        #mainApp { display: none; height: 100vh; flex-direction: row; }
+        .sidebar { width: 340px; background: white; padding: 15px; border-right: 1px solid #ddd; overflow-y: auto; }
+        .main { flex: 1; padding: 20px; display: flex; flex-direction: column; background: #fdfdfd; }
+        input, select, button { width: 100%; padding: 8px; margin: 4px 0; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        .row { display: flex; gap: 5px; align-items: center; }
+        .btn-add { background: var(--success); color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; }
+        .table-cont { flex: 1; background: white; border-radius: 8px; overflow: auto; border: 1px solid #ddd; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .summary-box { background: white; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        #adminModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; }
+        .modal-content { background: white; width: 95%; margin: 10px auto; padding: 20px; border-radius: 8px; max-height: 95vh; overflow-y: auto; }
+        .status-tag { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
+        .tag-lunas { background: #d4edda; color: #155724; }
+        .tag-hutang { background: #f8d7da; color: #721c24; }
+        .admin-input-group { display: flex; flex-direction: column; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
 
-        const prntWin = window.open('', '_blank', 'height=600,width=800');
-        const sisa = h.total - h.dp;
-        const infoBayarText = h.status === "Belum Lunas" ? `<b>SISA: Rp ${sisa.toLocaleString()}</b> (DP: Rp ${h.dp.toLocaleString()})` : "<b>STATUS: LUNAS</b>";
+<div id="loginScreen">
+    <div class="login-box">
+        <h2>MITRA ALUMINIUM</h2>
+        <input type="text" id="userLogin" placeholder="Username">
+        <input type="password" id="passLogin" placeholder="Password">
+        <button onclick="cekLogin()" style="background:var(--success); color:white; border:none; padding:10px; cursor:pointer;">MASUK SYSTEM</button>
+    </div>
+</div>
 
-        let tBody = "";
-        if(h.items && h.items.length > 0) {
-            h.items.forEach(it => {
-                tBody += `<tr><td>${it.jenis}</td><td>${it.p}x${it.l}</td><td>${it.qty || 1} Pcs</td><td>${it.detail}</td><td>Rp ${Math.round(it.subtotal).toLocaleString()}</td></tr>`;
-            });
-        } else {
-            tBody += `<tr><td>Data Lama</td><td>-</td><td>-</td><td>-</td><td>Rp ${h.total.toLocaleString()}</td></tr>`;
-        }
-
-        let htmlNota = `
-            <html>
-            <head>
-                <title>Cetak Nota - ${h.pembeli}</title>
-                <style>
-                    @page { size: A5 portrait; margin: 10mm; }
-                    body { font-family: sans-serif; font-size: 12px; }
-                    .kop { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
-                    th { background: #eee; }
-                </style>
-            </head>
-            <body>
-                <div class="kop">
-                    <h2 style="margin:0;">${db.kop.nama}</h2>
-                    <p style="margin:0;">${db.kop.alamat} | Telp: ${db.kop.telp}</p>
-                </div>
-                <div><b>Pembeli:</b> ${h.pembeli} | <b>Tanggal:</b> ${h.tgl}</div>
-                <table>
-                    <thead><tr><th>Item</th><th>Ukuran</th><th>Qty</th><th>Detail</th><th>Subtotal</th></tr></thead>
-                    <tbody>${tBody}</tbody>
-                </table>
-                <div style="margin-top:15px; text-align:right; font-size:16px; font-weight:bold;">
-                    TOTAL: Rp ${h.total.toLocaleString()}
-                </div>
-                <div style="margin-top:10px;">${infoBayarText}</div>
-                <script>window.print(); window.onafterprint = () => window.close();<\/script>
-            </body>
-            </html>`;
-
-        prntWin.document.write(htmlNota);
-        prntWin.document.close();
-    }
-</script>
+<div id="mainApp">
+    <div class="sidebar">
+        <h3 id="displayUser">User</h3>
+        <button id="btnAdmin" onclick="bukaAdmin()" style="display:none; background:var(--danger); color:white; border:none; padding:10px; margin-bottom:10px
