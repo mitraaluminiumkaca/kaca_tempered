@@ -107,6 +107,7 @@
             <h3 id="displayUser">User</h3>
             <div id="liveDate" style="font-size: 11px; color: #666;"></div>
         </div>
+        <!-- Tombol diubah agar selalu muncul untuk memantau riwayat -->
         <button id="btnAdmin" onclick="bukaAdmin()" style="display:block; background:var(--info); color:white; border:none; font-size:11px; padding:10px; margin-bottom:10px; cursor:pointer;">📂 RIWAYAT & CETAK BON</button>
         <hr>
         <label>Tanggal:</label><input type="date" id="tgl_input">
@@ -158,19 +159,21 @@
 <div id="adminModal">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>PANEL RIWAYAT & DATA</h2>
+            <h2>PANEL DATA & RIWAYAT</h2>
             <button onclick="tutupAdmin()" style="width:100px; background:var(--danger); color:white; border:none; padding:10px; cursor:pointer;">TUTUP</button>
         </div>
         <hr>
 
+        <!-- Bagian Riwayat Transaksi (TERBUKA UNTUK SEMUA USER/KASIR) -->
         <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #ffeeba;">
-            <h4>📋 Riwayat Transaksi</h4>
-            <div style="max-height: 200px; overflow: auto; background: white;"><table id="historyTable">
+            <h4>📋 Riwayat Transaksi & Cetak Ulang Bon</h4>
+            <div style="max-height: 250px; overflow: auto; background: white;"><table id="historyTable">
                 <thead><tr><th>Tgl</th><th>Pembeli</th><th>Total</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody id="historyBody"></tbody>
             </table></div>
         </div>
 
+        <!-- Bagian Khusus Kontrol Admin (HANYA MUNCUL JIKA ROLE 'admin') -->
         <div id="superAdminSection" style="display:none;">
             <div style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #90caf9;">
                 <h4>🏢 1. Pengaturan Kop Nota & Telepon</h4>
@@ -238,7 +241,7 @@
 
     let keranjang = [];
     let currentTotal = 0;
-    let loggedInRole = "user"; // Menyimpan role user yang sedang aktif
+    let loggedInRole = "user"; 
 
     dbRef.on('value', (snapshot) => {
         if(snapshot.val()) { 
@@ -248,6 +251,10 @@
                 saveDB();
             }
             renderUI(); 
+            // Update tabel history secara real-time jika modal sedang terbuka
+            if(document.getElementById('adminModal').style.display === 'block') {
+                renderHistory();
+            }
             document.getElementById('loadStatus').innerText = "System Ready"; 
         }
         else { 
@@ -269,7 +276,7 @@
     }
 
     function masukSistemUtama(username, role) {
-        loggedInRole = role; // Simpan hak akses role ke variabel global
+        loggedInRole = role; 
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainApp').style.display = 'flex';
         document.getElementById('displayUser').innerText = "Kasir: " + username;
@@ -359,7 +366,7 @@
     function bukaAdmin() {
         document.getElementById('adminModal').style.display = 'block';
         
-        // Cek role user, jika 'admin' maka buka akses menu pengaturan tambahan
+        // Atur penampakan fitur manajemen data khusus admin
         if (loggedInRole === 'admin') {
             document.getElementById('superAdminSection').style.display = 'block';
             document.getElementById('editKopNama').value = db.kop.nama;
@@ -376,14 +383,18 @@
 
     function renderHistory() {
         const body = document.getElementById('historyBody'); body.innerHTML = "";
-        if(!db.history) return;
+        if(!db.history || db.history.length === 0) {
+            body.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Belum ada riwayat transaksi.</td></tr>";
+            return;
+        }
+        
         db.history.slice().reverse().forEach(h => {
-            // Jika bukan admin, matikan fungsi click ubah status piutang agar aman
-            const tagClick = loggedInRole === 'admin' ? `onclick="ubahLunas(${h.id})"` : `onclick="alert('Hanya admin yang dapat melunasi piutang!')"`;
+            // Validasi proteksi klik pelunasan hutang untuk kasir biasa
+            const tagClick = loggedInRole === 'admin' ? `onclick="ubahLunas(${h.id})"` : `onclick="alert('Akses Terbatas: Hanya admin yang dapat merubah status pembayaran!')"`;
             const tag = h.status === 'Lunas' ? `<span class="status-tag tag-lunas">LUNAS</span>` : `<span class="status-tag tag-hutang" ${tagClick}>HUTANG</span>`;
             
-            // Tombol hapus (X) hanya ditampilkan jika yang login adalah admin
-            const tombolHapus = loggedInRole === 'admin' ? `<button onclick="hapusH(${h.id})">X</button>` : '';
+            // Tombol hapus data riwayat permanen hanya bisa diakses admin
+            const tombolHapus = loggedInRole === 'admin' ? `<button onclick="hapusH(${h.id})" style="background:var(--danger); color:white; border:none; width:auto; padding:3px 8px; cursor:pointer;">X</button>` : '';
 
             body.innerHTML += `<tr>
                 <td>${h.tgl}</td>
